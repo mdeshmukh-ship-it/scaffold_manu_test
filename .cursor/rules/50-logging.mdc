@@ -1,0 +1,12 @@
+---
+globs: apps/api/**/*.py
+description: Structured logging and audit requirements
+---
+
+# Logging Rules
+
+- Emit structured JSON logs to stdout.
+- Include `event_type`, `severity`, `request_id`, and `user_email` when applicable.
+- Use required event types: `http.request`, `db.operation`, `http.outbound`, `auth.event`, `authz.decision`.
+- Every outbound HTTP call must use [outbound_http.py](mdc:apps/api/src/api/outbound_http.py).
+- Every authorization check must log a decision using [audit.py](mdc:apps/api/src/api/audit.py).

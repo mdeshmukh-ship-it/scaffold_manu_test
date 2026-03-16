@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+description: Security baseline guardrails
+---
+
+# Security Rules
+
+- Never commit secrets, tokens, or private keys.
+- Never add DEV auth bypass behavior outside local/test.
+- Never log raw auth codes, tokens, passwords, or Authorization headers in production paths.
+- Use input validation for every external boundary.
+- Keep rate limits enabled for auth endpoints.
+- If a secret was exposed, rotate it immediately and move it into the proper secret channel.

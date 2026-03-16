@@ -1,0 +1,4 @@
+apps/api/uv.lock linguist-generated=true
+apps/web/yarn.lock linguist-generated=true
+apps/web/src/**/*.generatedTypes.ts linguist-generated=true
+apps/web/src/__generated_types__/* linguist-generated=true

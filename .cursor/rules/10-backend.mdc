@@ -1,0 +1,57 @@
+---
+globs: apps/api/**/*.py
+description: Backend implementation constraints
+---
+
+# Backend Rules
+
+- Python 3.13 only.
+- Tornado app entrypoint lives in [main.py](mdc:apps/api/src/api/main.py).
+- Every DB access must run in `db.operation("logical.op.name")`.
+- REST endpoints must use Pydantic request/response validation.
+- GraphQL mutation input must be validated by Pydantic models.
+- Authentication defaults to challenge codes with server-side sessions.
+- LLM calls must use `api/llm/client.py`.
+- Lightweight background jobs must use `api/tasks/base.py`.
+
+# Backend Style Philosophy
+
+- Readability wins over cleverness.
+- Local consistency is preferred over drive-by rewrites.
+- Keep diffs small and focused; preserve public behavior unless task requires a breaking change.
+- Treat PEP-8 as a baseline, not an absolute rule, if readability clearly improves.
+- Ruff line length is 120; do not contort prompt-heavy code to stay under shorter legacy limits.
+
+# Python Style Conventions
+
+- Imports:
+  - Group imports in this order: standard library, third-party, repo-local.
+  - Keep imports explicit and grep-friendly; prefer one import per line.
+  - Do not shadow module names with instances (`redis_client`, not `redis`).
+- Naming:
+  - `snake_case` for functions/variables, `CapWords` for classes, `UPPER_SNAKE_CASE` for constants.
+  - Prefer explicit names over abbreviations.
+- Typing:
+  - Type public and external-facing APIs.
+  - Prefer simple, honest types and built-in generics (`list[str]`, `dict[str, int]`, `X | None`).
+  - Avoid over-engineered type complexity unless it materially improves correctness.
+- Configuration:
+  - Keep env/config parsing centralized (prefer [settings.py](mdc:apps/api/src/api/settings.py)).
+  - If env vars are read directly, parse once and coerce types explicitly.
+- Logging and errors:
+  - Prefer f-strings and clear failure messages.
+  - In `except` blocks, use `logger.exception(...)` (or `logging.exception(...)`) when stack traces are useful.
+  - Catch specific exceptions (or `Exception`) with context; bare `except:` should be rare and only at hard boundaries.
+  - Never log secrets.
+
+# Documentation Conventions
+
+- For non-trivial classes/functions, add a one-line purpose comment in triple-single-quote format:
+  - `''' Extract financial metrics '''`
+- Use tense consistently:
+  - Classes: active present tense (`''' Extracts financial metrics '''`)
+  - Functions: imperative tense (`''' Extract financial metrics '''`)
+- Use comment markers intentionally:
+  - `TODO:` intentional follow-up
+  - `XXX:` temporary migration hack
+  - `NB:` short explanation for hard-to-read logic

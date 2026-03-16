@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+description: Test expectations and regression guardrails
+---
+
+# Testing Rules
+
+- Add or update tests for every behavior change.
+- Prefer endpoint-level tests for auth and GraphQL flows.
+- Keep tests deterministic and avoid external network calls.
+- If a bug is fixed, add a regression test.

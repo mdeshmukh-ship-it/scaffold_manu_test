@@ -1,0 +1,27 @@
+---
+globs: apps/web/**/*.{js,jsx,ts,tsx,css}
+description: Frontend implementation constraints
+---
+
+# Frontend Rules
+
+- Use Yarn in `apps/web`.
+- Use Next.js Pages Router + TypeScript.
+- Keep `apps/web/pages/*` very small and client-only. Put UI in `apps/web/components/*`, reusable logic in `apps/web/hooks/*`, browser helpers in `apps/web/lib/*`, and Apollo setup in `apps/web/clients/*`.
+- Treat the scaffold frontend as client-only. Do not add App Router files, Next middleware, API routes, server components, `getServerSideProps`, or `getStaticProps`.
+- Use Apollo Client from [apolloClient.ts](mdc:apps/web/clients/apolloClient.ts) for GraphQL application data.
+- Use `requestApiJson()` for browser calls to `/api/*`.
+- Keep browser requests same-origin and limited to scaffold backend endpoints (`/graphql` and existing `/api/auth/*` flows). Do not add ad-hoc browser calls to third-party services.
+- GraphQL operations live in `hooks`, `components`, or `pages`. Generated files live next to operations and in `__generated_types__`.
+- Run `yarn codegen` after frontend GraphQL operation changes.
+- If backend GraphQL schema changes, run `yarn schema:refresh` with the local API running, then rerun `yarn codegen`.
+- Never hand-edit `*.generatedTypes.ts`.
+- Do not add extra client state libraries. Use Apollo cache + local React state.
+- Use Tailwind v4 and shared tokens from [globals.css](mdc:apps/web/styles/globals.css), imported only in [pages/_app.tsx](mdc:apps/web/pages/_app.tsx).
+- Keep shared primitives under `components/generic`, but only when they reduce repetition without hiding behavior.
+- If icons are needed, use `lucide-react`. Do not add another icon library.
+- Keep the default app small. Do not add extra demo flows unless they teach a core scaffold pattern.
+- Prefer `@/*` imports over deep relative paths.
+- Prefer arrow functions, clear names, browser APIs, and no premature memoization.
+- Keep custom CSS minimal.
+- Keep custom colors minimal and strongly prefer existing colors defined in `styles/globals.css`.

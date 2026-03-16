@@ -1,0 +1,50 @@
+input CreateNoteInput {
+  body: String! = ""
+  title: String!
+}
+
+type CurrentUserType {
+  email: String!
+  id: String!
+}
+
+type Mutation {
+  createNote(input: CreateNoteInput!): NoteType!
+  startNoteSummaryRun: TaskRunType!
+  summarizeNote(noteId: String!): NoteType!
+}
+
+type NoteType {
+  body: String!
+  createdAt: String!
+  id: String!
+  summary: String
+  summaryProvider: String
+  summaryUpdatedAt: String
+  title: String!
+}
+
+type Query {
+  currentUser: CurrentUserType!
+  notes: [NoteType!]!
+  taskRun(taskRunId: String!): TaskRunType
+  taskRuns: [TaskRunType!]!
+  viewer: ViewerType!
+}
+
+type TaskRunType {
+  createdAt: String!
+  errorMessage: String
+  finishedAt: String
+  id: String!
+  message: String
+  progressCurrent: Int!
+  progressTotal: Int!
+  status: String!
+  taskName: String!
+  updatedAt: String!
+}
+
+type ViewerType {
+  email: String!
+}

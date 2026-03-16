@@ -1,0 +1,18 @@
+---
+alwaysApply: true
+description: Scaffold workflow and definition of done
+---
+
+# Workflow
+
+- Use red/green TDD for behavior changes.
+- Write/adjust tests before implementation.
+- Use platform primitives for DB and outbound calls.
+- Run definition-of-done checks before claiming completion.
+
+# Definition Of Done
+
+- `make test`
+- `make lint`
+- `make typecheck`
+- `make security`

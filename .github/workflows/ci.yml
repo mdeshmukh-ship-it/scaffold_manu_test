@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: apps/web/yarn.lock
+      - name: Sync backend deps
+        run: cd apps/api && uv sync --frozen
+      - name: Install frontend deps
+        run: |
+          corepack enable
+          cd apps/web && yarn install --frozen-lockfile
+      - name: Test
+        run: make test
+      - name: Lint
+        run: make lint
+      - name: Typecheck
+        run: make typecheck
+      - name: Security
+        run: make security

@@ -1,0 +1,11 @@
+entrypoint = "scripts/replit_run.sh"
+run = "bash scripts/replit_run.sh"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["bash", "scripts/replit_run.sh"]
+
+[workflows]
+runButton = "Start"

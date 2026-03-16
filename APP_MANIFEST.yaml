@@ -1,0 +1,17 @@
+app:
+  name: "Scaffold App"
+  slug: "scaffold-app"
+  owner_team: "TEAM_NAME"
+  primary_owner_email: "owner@example.com"
+
+severity:
+  level: "L1"
+  audience: "internal"
+  data_notes: "Describe what data this app touches."
+
+gcp:
+  region: "us-central1"
+  artifact_registry_repo: "apps"
+  cloud_run_service: "scaffold-app"
+  cloud_sql_instance: "scaffold-app-pg"
+  gcs_bucket: "AUTO"

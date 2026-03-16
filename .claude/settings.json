@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Read(**/*.pem)",
+      "Edit(**/*.pem)",
+      "Read(**/*id_rsa*)",
+      "Edit(**/*id_rsa*)",
+      "Bash(curl*)",
+      "Bash(wget*)"
+    ],
+    "allow": [
+      "Bash(make setup)",
+      "Bash(make verify_setup)",
+      "Bash(make dev)",
+      "Bash(make test)",
+      "Bash(make lint)",
+      "Bash(make typecheck)",
+      "Bash(make security)",
+      "Bash(make fmt)",
+      "Bash(make build)",
+      "Bash(cd apps/web && yarn codegen)"
+    ],
+    "ask": [
+      "WebFetch(*)",
+      "Bash(*)"
+    ]
+  }
+}
