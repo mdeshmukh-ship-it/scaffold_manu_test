@@ -30,7 +30,9 @@ def _get_bq_client() -> Any:
         return None
 
     try:
+        import json
         import os
+        import tempfile
 
         from google.cloud import bigquery  # type: ignore[import-untyped]
         from google.oauth2 import service_account  # type: ignore[import-untyped]
@@ -38,15 +40,29 @@ def _get_bq_client() -> Any:
         settings = get_settings()
         project = settings.gcp_project_id or None
         creds_path = settings.google_application_credentials or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+        creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON", "")
 
         if creds_path and os.path.isfile(creds_path):
+            # Load from a file path (local dev / GCP)
             credentials = service_account.Credentials.from_service_account_file(creds_path)
             _bq_client = bigquery.Client(project=project, credentials=credentials)
             logger.info(
-                "BigQuery client initialised with service account",
+                "BigQuery client initialised with service account file",
                 event_type="bigquery.init",
                 severity="INFO",
                 credentials_path=creds_path,
+                project=project,
+            )
+        elif creds_json:
+            # Load from inline JSON string (Replit Secrets / env var)
+            info = json.loads(creds_json)
+            credentials = service_account.Credentials.from_service_account_info(info)
+            project = project or info.get("project_id")
+            _bq_client = bigquery.Client(project=project, credentials=credentials)
+            logger.info(
+                "BigQuery client initialised with inline JSON credentials",
+                event_type="bigquery.init",
+                severity="INFO",
                 project=project,
             )
         else:
