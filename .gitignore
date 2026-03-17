@@ -29,3 +29,6 @@ dist/
 build/
 
 __pycache__/
+
+# Local SQLite database
+*.db

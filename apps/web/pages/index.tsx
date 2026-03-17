@@ -1,11 +1,11 @@
 import { NextPageWithLayout } from '@/pages/_app'
 import DefaultPageContainer from '@/components/layouts/DefaultPageContainer'
-import NotesBoard from '@/components/notes/NotesBoard'
+import FamilyStatusBoard from '@/components/dashboard/FamilyStatusBoard'
 
-const Home: NextPageWithLayout = () => <NotesBoard />
+const Home: NextPageWithLayout = () => <FamilyStatusBoard />
 
 Home.getLayout = (page) => (
-  <DefaultPageContainer title="Notes">{page}</DefaultPageContainer>
+  <DefaultPageContainer title="Portfolio Drift Monitor">{page}</DefaultPageContainer>
 )
 
 export default Home

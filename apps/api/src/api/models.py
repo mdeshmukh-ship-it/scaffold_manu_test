@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -101,3 +101,98 @@ class TaskRun(Base):
         onupdate=utcnow,
     )
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+# ---------------------------------------------------------------------------
+# Portfolio Drift Monitor domain models
+# ---------------------------------------------------------------------------
+
+
+class Family(Base):
+    """A client family unit that may contain multiple entities, accounts, and holdings."""
+
+    __tablename__ = "families"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    name: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
+    pm_email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    drift_threshold_pct: Mapped[float] = mapped_column(Float, nullable=False, default=10.0)
+    monitoring_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class FamilyTarget(Base):
+    """A PM-defined allocation target for a family (Asset Class, Account, or Ticker)."""
+
+    __tablename__ = "family_targets"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    family_id: Mapped[str] = mapped_column(String(36), ForeignKey("families.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    target_type: Mapped[str] = mapped_column(String(30), nullable=False)  # asset_class | account | ticker
+    target_weight_pct: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class MonitoringRun(Base):
+    """A single daily monitoring run that checks all families for drift breaches."""
+
+    __tablename__ = "monitoring_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")  # pending | running | completed | failed
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    total_families: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    breach_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+
+class FamilyRunResult(Base):
+    """Per-family outcome of a monitoring run."""
+
+    __tablename__ = "family_run_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    run_id: Mapped[str] = mapped_column(String(36), ForeignKey("monitoring_runs.id"), nullable=False, index=True)
+    family_id: Mapped[str] = mapped_column(String(36), ForeignKey("families.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)  # in_balance | breach | error
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+
+class DriftSnapshot(Base):
+    """Computed actual vs target for a single family target within a monitoring run."""
+
+    __tablename__ = "drift_snapshots"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    result_id: Mapped[str] = mapped_column(String(36), ForeignKey("family_run_results.id"), nullable=False, index=True)
+    target_id: Mapped[str] = mapped_column(String(36), ForeignKey("family_targets.id"), nullable=False, index=True)
+    target_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    target_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    target_weight_pct: Mapped[float] = mapped_column(Float, nullable=False)
+    actual_market_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    actual_pct: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    drift_pct: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    is_breach: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class Alert(Base):
+    """Record of a Slack notification sent for a family breach."""
+
+    __tablename__ = "alerts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    family_id: Mapped[str] = mapped_column(String(36), ForeignKey("families.id"), nullable=False, index=True)
+    result_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("family_run_results.id"), nullable=True, index=True)
+    pm_email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    summary_text: Mapped[str] = mapped_column(Text, nullable=False)
+    delivery_status: Mapped[str] = mapped_column(String(30), nullable=False, default="sent")  # sent | failed | pending
+    acknowledged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acknowledged_by: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)

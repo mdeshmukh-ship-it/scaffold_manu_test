@@ -21,7 +21,7 @@ class AppSettings(BaseSettings):
     )
 
     app_env: str = "local"
-    app_name: str = "Scaffold App"
+    app_name: str = "Portfolio Drift Monitor"
     app_host: str = "127.0.0.1"
     app_port: int = 8001
 
@@ -72,6 +72,14 @@ class AppSettings(BaseSettings):
     llm_timeout_seconds: float = 20.0
     llm_max_retries: int = 2
     scheduler_shared_token: str = ""
+
+    # Slack integration for drift alerts
+    slack_webhook_url: str = ""
+    slack_alert_channel: str = "#portfolio-alerts"
+
+    # GCP / BigQuery settings for Rebalancer
+    gcp_project_id: str = "perennial-data-prod"
+    google_application_credentials: str = ""
 
     @property
     def manifest(self) -> dict[str, Any]:

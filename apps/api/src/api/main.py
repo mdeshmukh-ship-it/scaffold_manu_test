@@ -16,6 +16,15 @@ from api.graphql.handler import GraphQLHandler
 from api.logging_config import configure_logging, get_logger
 from api.rest.health import HealthHandler
 from api.rest.me import MeHandler
+from api.rest.monitoring import MonitoringRunHandler
+from api.rest.rebalancer import (
+    RebalancerAccountsHandler,
+    RebalancerClientsHandler,
+    RebalancerDriftHandler,
+    RebalancerEntitiesHandler,
+    RebalancerSaveTargetsHandler,
+    RebalancerTargetsHandler,
+)
 from api.rest.tasks import NoteSummaryRunHandler
 from api.rest.uploads import UploadSignHandler
 from api.settings import get_settings
@@ -37,7 +46,15 @@ def create_app() -> tornado.web.Application:
             (r"/api/auth/logout", LogoutAuthHandler),
             (r"/api/me", MeHandler),
             (r"/api/tasks/note-summary/run", NoteSummaryRunHandler),
+            (r"/api/monitoring/run", MonitoringRunHandler),
             (r"/api/uploads/sign", UploadSignHandler),
+            # Rebalancer endpoints (BigQuery-backed)
+            (r"/api/rebalancer/clients", RebalancerClientsHandler),
+            (r"/api/rebalancer/targets", RebalancerTargetsHandler),
+            (r"/api/rebalancer/entities", RebalancerEntitiesHandler),
+            (r"/api/rebalancer/accounts", RebalancerAccountsHandler),
+            (r"/api/rebalancer/drift", RebalancerDriftHandler),
+            (r"/api/rebalancer/save-targets", RebalancerSaveTargetsHandler),
             (r"/graphql", GraphQLHandler),
         ],
         debug=settings.app_env == "local",
