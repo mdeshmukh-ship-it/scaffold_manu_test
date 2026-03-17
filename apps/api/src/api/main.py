@@ -17,6 +17,18 @@ from api.logging_config import configure_logging, get_logger
 from api.rest.health import HealthHandler
 from api.rest.me import MeHandler
 from api.rest.monitoring import MonitoringRunHandler
+from api.rest.cio import (
+    CIOAccountsHandler,
+    CIOClientsHandler,
+    CIOCumulativeReturnsHandler,
+    CIODailyPnlHandler,
+    CIOEntitiesHandler,
+    CIOMarketValuesHandler,
+    CIOMonthlyReturnsHandler,
+    CIORiskMetricsHandler,
+    CIORollingMetricsHandler,
+    CIOTwrorHandler,
+)
 from api.rest.rebalancer import (
     RebalancerAccountsHandler,
     RebalancerClientsHandler,
@@ -48,6 +60,17 @@ def create_app() -> tornado.web.Application:
             (r"/api/tasks/note-summary/run", NoteSummaryRunHandler),
             (r"/api/monitoring/run", MonitoringRunHandler),
             (r"/api/uploads/sign", UploadSignHandler),
+            # CIO Dashboard endpoints (BigQuery-backed)
+            (r"/api/cio/clients", CIOClientsHandler),
+            (r"/api/cio/entities", CIOEntitiesHandler),
+            (r"/api/cio/accounts", CIOAccountsHandler),
+            (r"/api/cio/market-values", CIOMarketValuesHandler),
+            (r"/api/cio/daily-pnl", CIODailyPnlHandler),
+            (r"/api/cio/twror", CIOTwrorHandler),
+            (r"/api/cio/monthly-returns", CIOMonthlyReturnsHandler),
+            (r"/api/cio/risk-metrics", CIORiskMetricsHandler),
+            (r"/api/cio/cumulative-returns", CIOCumulativeReturnsHandler),
+            (r"/api/cio/rolling-metrics", CIORollingMetricsHandler),
             # Rebalancer endpoints (BigQuery-backed)
             (r"/api/rebalancer/clients", RebalancerClientsHandler),
             (r"/api/rebalancer/targets", RebalancerTargetsHandler),

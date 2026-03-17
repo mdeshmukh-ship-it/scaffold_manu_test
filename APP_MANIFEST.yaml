@@ -1,17 +1,17 @@
 app:
-  name: "Portfolio Drift Monitor"
-  slug: "portfolio-drift-monitor"
+  name: "CIO Dashboard"
+  slug: "cio-dashboard"
   owner_team: "Portfolio Management"
   primary_owner_email: "owner@example.com"
 
 severity:
   level: "L1"
   audience: "internal"
-  data_notes: "Portfolio target allocations, drift calculations, and monitoring alerts for client families."
+  data_notes: "CIO-level portfolio reporting dashboard with performance analytics, risk metrics, attribution analysis, and liquidity monitoring."
 
 gcp:
   region: "us-central1"
   artifact_registry_repo: "apps"
-  cloud_run_service: "portfolio-drift-monitor"
-  cloud_sql_instance: "portfolio-drift-monitor-pg"
+  cloud_run_service: "cio-dashboard"
+  cloud_sql_instance: "cio-dashboard-pg"
   gcs_bucket: "AUTO"

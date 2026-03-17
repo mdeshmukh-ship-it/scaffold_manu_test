@@ -21,7 +21,7 @@ class AppSettings(BaseSettings):
     )
 
     app_env: str = "local"
-    app_name: str = "Portfolio Drift Monitor"
+    app_name: str = "CIO Dashboard"
     app_host: str = "127.0.0.1"
     app_port: int = 8001
 
