@@ -29,7 +29,7 @@ export DEV_PASSWORD_LOGIN_ENABLED="${DEV_PASSWORD_LOGIN_ENABLED:-true}"
 export DEV_PASSWORD_LOGIN_USERNAME="${DEV_PASSWORD_LOGIN_USERNAME:-admin}"
 export DEV_PASSWORD_LOGIN_PASSWORD="${DEV_PASSWORD_LOGIN_PASSWORD:-local-dev-password}"
 export DEV_PASSWORD_LOGIN_EMAIL="${DEV_PASSWORD_LOGIN_EMAIL:-admin@example.com}"
-export LLM_PROVIDER="${LLM_PROVIDER:-local_qwen}"
+export LLM_PROVIDER="${LLM_PROVIDER:-none}"
 export LLM_MODEL="${LLM_MODEL:-Qwen/Qwen3.5-2B}"
 export LLM_LOCAL_BASE_URL="${LLM_LOCAL_BASE_URL:-http://127.0.0.1:8002}"
 
@@ -44,9 +44,13 @@ fi
 
 LLM_PID=""
 if [[ "$LLM_PROVIDER" == "local_qwen" ]]; then
-  "$ROOT_DIR/scripts/llm_local_start.sh"
-  if [[ -f "$PID_DIR/llm.pid" ]]; then
-    LLM_PID="$(tr -d '[:space:]' < "$PID_DIR/llm.pid")"
+  if "$ROOT_DIR/scripts/llm_local_start.sh" 2>/dev/null; then
+    if [[ -f "$PID_DIR/llm.pid" ]]; then
+      LLM_PID="$(tr -d '[:space:]' < "$PID_DIR/llm.pid")"
+    fi
+  else
+    echo "⚠️  Local LLM not set up — skipping. Run 'make llm_local_setup' if needed."
+    export LLM_PROVIDER="none"
   fi
 fi
 

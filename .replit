@@ -7,5 +7,13 @@ channel = "stable-24_05"
 [deployment]
 run = ["bash", "scripts/replit_run.sh"]
 
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 8001
+externalPort = 8001
+
 [workflows]
 runButton = "Start"
