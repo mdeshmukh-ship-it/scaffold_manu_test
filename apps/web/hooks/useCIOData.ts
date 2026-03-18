@@ -17,10 +17,12 @@ export type AccountRow = {
 export type TwrorRow = {
   account_number: string
   FBSIShortName: string
-  mtd_twror: number | null
   qtd_twror: number | null
   ytd_twror: number | null
-  itd_twror: number | null
+  one_year_twror: number | null
+  three_year_twror: number | null
+  five_year_twror: number | null
+  inception_twror: number | null
 }
 
 export type MonthlyReturn = {
@@ -55,6 +57,29 @@ export type RiskMetrics = {
   worst_month: string
   worst_month_return_pct: number
   total_days: number
+}
+
+export type PeriodVol = {
+  qtd_vol: number
+  ytd_vol: number
+  '1y_vol': number
+  '3y_vol': number
+  itd_vol: number
+}
+
+export type RaFundHolding = {
+  fund_name: string
+  asset_class: string
+  investment_type: string
+  valuation: number
+  total_called_capital: number
+}
+
+export type CapitalCallRow = {
+  fund_name: string
+  month: string
+  capital_called: number
+  distributions: number
 }
 
 // ---------------------------------------------------------------------------
@@ -255,6 +280,70 @@ export function useCIORollingMetrics(reportDate: string, accounts: string[]) {
       setLoading(false)
     }
   }, [reportDate, accounts])
+
+  return { data, loading, fetch }
+}
+
+export function useCIOPeriodVol(reportDate: string, accounts: string[]) {
+  const [data, setData] = useState<PeriodVol | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!reportDate) return
+    setLoading(true)
+    try {
+      const accountsCsv = accounts.length > 0 ? accounts.join(',') : ''
+      const url = `/api/cio/period-vol?report_date=${encodeURIComponent(reportDate)}${accountsCsv ? `&accounts=${encodeURIComponent(accountsCsv)}` : ''}`
+      const res = await requestApiJson<{ vol: PeriodVol }>(url)
+      setData(res.vol)
+    } catch {
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [reportDate, accounts])
+
+  return { data, loading, fetch }
+}
+
+export function useCIORaFundHoldings(reportDate: string) {
+  const [data, setData] = useState<RaFundHolding[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!reportDate) return
+    setLoading(true)
+    try {
+      const url = `/api/cio/ra-fund-holdings?report_date=${encodeURIComponent(reportDate)}`
+      const res = await requestApiJson<{ rows: RaFundHolding[] }>(url)
+      setData(res.rows)
+    } catch {
+      setData([])
+    } finally {
+      setLoading(false)
+    }
+  }, [reportDate])
+
+  return { data, loading, fetch }
+}
+
+export function useCIOCapitalCallsTimeline(reportDate: string) {
+  const [data, setData] = useState<CapitalCallRow[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!reportDate) return
+    setLoading(true)
+    try {
+      const url = `/api/cio/capital-calls-timeline?report_date=${encodeURIComponent(reportDate)}`
+      const res = await requestApiJson<{ rows: CapitalCallRow[] }>(url)
+      setData(res.rows)
+    } catch {
+      setData([])
+    } finally {
+      setLoading(false)
+    }
+  }, [reportDate])
 
   return { data, loading, fetch }
 }

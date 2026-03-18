@@ -1,12 +1,18 @@
 """BigQuery client for CIO Dashboard queries.
 
 Mirrors the SQL queries from the Hex CIO Client Reporting project,
-adapted for the BigQuery Python client with parameterized queries.
+adapted for the BigQuery Python client with parameterised queries.
+
+IMPORTANT: All return calculations use the DailyPnL column so that
+cash-flow transfers are excluded from performance numbers.
+    daily_return = DailyPnL / (MarketValue - DailyPnL)
 """
 
 from __future__ import annotations
 
 import asyncio
+import math
+from collections import defaultdict
 from datetime import date, datetime
 from typing import Any
 
@@ -16,25 +22,78 @@ from api.services.bigquery_client import _get_bq_client, _make_serializable, _ru
 logger = get_logger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# 1. Account Market Values (mirrors Hex "Acc market values" cell)
-# ---------------------------------------------------------------------------
+# ======================================================================
+# Helpers
+# ======================================================================
+
+def _daily_returns_from_pnl(daily_data: list[dict[str, Any]]) -> tuple[list[str], list[float]]:
+    """Build a sorted (dates, returns) pair using DailyPnL / BOD-MV.
+
+    Returns exclude transfers because DailyPnL only captures real P&L.
+    Falls back to MV-change with clipping when DailyPnL is not available.
+    """
+    # Aggregate per date across all accounts
+    date_mv: dict[str, float] = defaultdict(float)
+    date_pnl: dict[str, float] = defaultdict(float)
+    has_pnl = False
+
+    for row in daily_data:
+        d = str(row.get("Date", ""))[:10]
+        mv = float(row.get("MarketValue", 0) or 0)
+        pnl = float(row.get("DailyPnL", 0) or 0)
+        date_mv[d] += mv
+        date_pnl[d] += pnl
+        if pnl != 0:
+            has_pnl = True
+
+    sorted_dates = sorted(date_mv.keys())
+    if len(sorted_dates) < 2:
+        return [], []
+
+    daily_returns: list[float] = []
+
+    if has_pnl:
+        # PnL-based return: ret = PnL_today / (MV_today - PnL_today)
+        for d in sorted_dates:
+            pnl = date_pnl[d]
+            mv = date_mv[d]
+            bod_mv = mv - pnl  # beginning-of-day MV
+            if bod_mv > 0:
+                ret = pnl / bod_mv
+            else:
+                ret = 0.0
+            daily_returns.append(ret)
+        # First date has no meaningful return; remove it
+        sorted_dates = sorted_dates[1:]
+        daily_returns = daily_returns[1:]
+    else:
+        # Fallback: MV change with clipping
+        for i in range(1, len(sorted_dates)):
+            prev_mv = date_mv[sorted_dates[i - 1]]
+            curr_mv = date_mv[sorted_dates[i]]
+            if prev_mv > 0:
+                ret = (curr_mv - prev_mv) / prev_mv
+                ret = max(-0.15, min(0.15, ret))
+            else:
+                ret = 0.0
+            daily_returns.append(ret)
+        sorted_dates = sorted_dates[1:]
+
+    return sorted_dates, daily_returns
+
+
+# ======================================================================
+# 1. Account Market Values
+# ======================================================================
 
 async def get_account_market_values(
     report_date: str,
     accounts: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Fetch account market values on or before report_date.
-
-    Snaps to the latest available date <= report_date.
-    Optionally filters by a list of FBSIShortName values.
-    """
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     account_filter = ""
-    params = [
-        bigquery.ScalarQueryParameter("report_date", "STRING", report_date),
-    ]
+    params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
 
     if accounts and len(accounts) > 0:
         account_filter = "AND B.FBSIShortName IN UNNEST(@accounts)"
@@ -61,21 +120,18 @@ async def get_account_market_values(
     return await _run_query(query, params)
 
 
-# ---------------------------------------------------------------------------
-# 2. Daily PnL Data (mirrors Hex "Daily pnl data" cell)
-# ---------------------------------------------------------------------------
+# ======================================================================
+# 2. Daily PnL Data  (NOW includes DailyPnL column!)
+# ======================================================================
 
 async def get_daily_pnl_data(
     report_date: str,
     accounts: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Fetch daily market values per account up to report_date."""
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     account_filter = ""
-    params = [
-        bigquery.ScalarQueryParameter("report_date", "STRING", report_date),
-    ]
+    params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
 
     if accounts and len(accounts) > 0:
         account_filter = "AND B.FBSIShortName IN UNNEST(@accounts)"
@@ -87,7 +143,8 @@ async def get_daily_pnl_data(
       A.Date,
       B.FBSIShortName,
       B.PrimaryAccountHolder,
-      A.MarketValue
+      A.MarketValue,
+      A.DailyPnL
     FROM `perennial-data-prod.fidelity.daily_account_market_values` A
     JOIN `perennial-data-prod.fidelity.accounts` B
       ON A.AccountNumber = B.AccountNumber
@@ -98,14 +155,13 @@ async def get_daily_pnl_data(
     return await _run_query(query, params)
 
 
-# ---------------------------------------------------------------------------
-# 3. TWROR Data (mirrors Hex "TWROR data" cell)
-# ---------------------------------------------------------------------------
+# ======================================================================
+# 3. TWROR Data  (correct column names from BigQuery)
+# ======================================================================
 
 async def get_twror_data(
     accounts: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Fetch time-weighted rate of return data per account."""
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     account_filter = ""
@@ -119,10 +175,12 @@ async def get_twror_data(
     SELECT
       r.account_number,
       b.FBSIShortName,
-      r.mtd_twror,
       r.qtd_twror,
       r.ytd_twror,
-      r.itd_twror
+      r.one_year_twror,
+      r.three_year_twror,
+      r.five_year_twror,
+      r.inception_twror
     FROM `perennial-data-prod.fidelity.account_twror` r
     JOIN `perennial-data-prod.fidelity.accounts` b
       ON r.account_number = b.AccountNumber
@@ -131,12 +189,11 @@ async def get_twror_data(
     return await _run_query(query, params)
 
 
-# ---------------------------------------------------------------------------
-# 4. Entity/Account Options (mirrors Hex filter cells)
-# ---------------------------------------------------------------------------
+# ======================================================================
+# 4. Entity / Account Options
+# ======================================================================
 
 async def get_entity_options(client_name: str) -> list[str]:
-    """Return distinct PrimaryAccountHolder values for a client."""
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     query = """
@@ -152,7 +209,6 @@ async def get_entity_options(client_name: str) -> list[str]:
 
 
 async def get_account_options(client_name: str, entities: list[str]) -> list[dict[str, str]]:
-    """Return distinct accounts for a client filtered by entities."""
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     query = """
@@ -172,55 +228,112 @@ async def get_account_options(client_name: str, entities: list[str]) -> list[dic
     return await _run_query(query, params)
 
 
-# ---------------------------------------------------------------------------
-# 5. Computed Analytics (mirrors Hex Python cells)
-# ---------------------------------------------------------------------------
+# ======================================================================
+# 5. RA Fund Holdings / Private Assets
+# ======================================================================
+
+async def get_ra_fund_holdings(report_date: str) -> list[dict[str, Any]]:
+    """Fetch private-asset valuations and capital calls by fund."""
+    from google.cloud import bigquery  # type: ignore[import-untyped]
+
+    query = """
+    WITH MaxPrivatesAsOfDate AS (
+        SELECT MAX(COALESCE(
+            SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+            SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+        )) AS max_valuation_date
+        FROM `perennial-data-prod.fidelity.private_asset_valuations`
+        WHERE COALESCE(
+            SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+            SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+        ) <= PARSE_DATE('%Y-%m-%d', @report_date)
+    ),
+    Valuations AS (
+        SELECT fund_name, asset_class, investment_type, valuation
+        FROM `perennial-data-prod.fidelity.private_asset_valuations`
+        WHERE COALESCE(
+            SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+            SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+        ) = (SELECT max_valuation_date FROM MaxPrivatesAsOfDate)
+    ),
+    CalledCapital AS (
+        SELECT fund_name, SUM(capital_called) AS total_called_capital
+        FROM `perennial-data-prod.fidelity.private_asset_capital_calls`
+        WHERE COALESCE(
+            SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+            SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+        ) <= (SELECT max_valuation_date FROM MaxPrivatesAsOfDate)
+        GROUP BY fund_name
+    )
+    SELECT
+        v.fund_name,
+        v.asset_class,
+        v.investment_type,
+        v.valuation,
+        COALESCE(cc.total_called_capital, 0) AS total_called_capital
+    FROM Valuations v
+    LEFT JOIN CalledCapital cc ON v.fund_name = cc.fund_name
+    """
+    params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
+    return await _run_query(query, params)
+
+
+async def get_capital_calls_timeline(report_date: str) -> list[dict[str, Any]]:
+    """Fetch capital call history by fund and month."""
+    from google.cloud import bigquery  # type: ignore[import-untyped]
+
+    query = """
+    SELECT
+        fund_name,
+        FORMAT_DATE('%Y-%m',
+            COALESCE(
+                SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+                SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+            )
+        ) AS month,
+        SUM(capital_called) AS capital_called,
+        SUM(COALESCE(distributions, 0)) AS distributions
+    FROM `perennial-data-prod.fidelity.private_asset_capital_calls`
+    WHERE COALESCE(
+        SAFE.PARSE_DATE('%Y-%m-%d', effectivedate),
+        SAFE.PARSE_DATE('%m/%d/%Y', effectivedate)
+    ) <= PARSE_DATE('%Y-%m-%d', @report_date)
+    GROUP BY fund_name, month
+    ORDER BY month ASC
+    """
+    params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
+    return await _run_query(query, params)
+
+
+# ======================================================================
+# 6. Computed Analytics  — ALL using DailyPnL (transfer-free)
+# ======================================================================
 
 def compute_monthly_returns(daily_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Compute monthly returns from daily market value data.
-
-    Mirrors the Python logic from Hex Monthly Performance Summary cell.
-    Calculates per-account daily returns, clips extremes, then aggregates.
-    """
+    """Compute monthly returns using DailyPnL (excludes transfers)."""
     if not daily_data:
         return []
 
-    # Group by date and sum market values
-    from collections import defaultdict
+    sorted_dates, daily_returns = _daily_returns_from_pnl(daily_data)
+    if not daily_returns:
+        return []
 
+    # Ending MV per date (for the table's "ending value" column)
     date_mv: dict[str, float] = defaultdict(float)
     for row in daily_data:
         d = str(row.get("Date", ""))[:10]
         mv = float(row.get("MarketValue", 0) or 0)
         date_mv[d] += mv
 
-    sorted_dates = sorted(date_mv.keys())
-    if len(sorted_dates) < 2:
-        return []
-
-    # Compute daily returns, clip to [-15%, +15%]
-    daily_returns: list[tuple[str, float]] = []
-    for i in range(1, len(sorted_dates)):
-        prev_mv = date_mv[sorted_dates[i - 1]]
-        curr_mv = date_mv[sorted_dates[i]]
-        if prev_mv > 0:
-            ret = (curr_mv - prev_mv) / prev_mv
-            ret = max(-0.15, min(0.15, ret))  # clip
-        else:
-            ret = 0.0
-        daily_returns.append((sorted_dates[i], ret))
-
     # Aggregate to monthly
     monthly: dict[str, list[float]] = defaultdict(list)
     monthly_end_mv: dict[str, float] = {}
-    for d, ret in daily_returns:
-        month_key = d[:7]  # YYYY-MM
-        monthly[month_key].append(ret)
-    for d in sorted_dates:
+    for d, ret in zip(sorted_dates, daily_returns):
         month_key = d[:7]
-        monthly_end_mv[month_key] = date_mv[d]
+        monthly[month_key].append(ret)
+    for d in sorted(date_mv.keys()):
+        monthly_end_mv[d[:7]] = date_mv[d]
 
-    # Compound daily returns per month
     result = []
     cumulative = 1.0
     for month_key in sorted(monthly.keys()):
@@ -241,39 +354,11 @@ def compute_monthly_returns(daily_data: list[dict[str, Any]]) -> list[dict[str, 
 
 
 def compute_risk_metrics(daily_data: list[dict[str, Any]]) -> dict[str, Any]:
-    """Compute ITD risk metrics from daily market value data.
-
-    Returns volatility, max drawdown, sharpe, sortino, best/worst month, etc.
-    """
-    from collections import defaultdict
-    import math
-
+    """Compute ITD risk metrics using DailyPnL (excludes transfers)."""
     if not daily_data:
         return {}
 
-    # Aggregate daily MVs
-    date_mv: dict[str, float] = defaultdict(float)
-    for row in daily_data:
-        d = str(row.get("Date", ""))[:10]
-        mv = float(row.get("MarketValue", 0) or 0)
-        date_mv[d] += mv
-
-    sorted_dates = sorted(date_mv.keys())
-    if len(sorted_dates) < 2:
-        return {}
-
-    # Daily returns, clipped
-    daily_returns: list[float] = []
-    for i in range(1, len(sorted_dates)):
-        prev_mv = date_mv[sorted_dates[i - 1]]
-        curr_mv = date_mv[sorted_dates[i]]
-        if prev_mv > 0:
-            ret = (curr_mv - prev_mv) / prev_mv
-            ret = max(-0.15, min(0.15, ret))
-        else:
-            ret = 0.0
-        daily_returns.append(ret)
-
+    sorted_dates, daily_returns = _daily_returns_from_pnl(daily_data)
     if not daily_returns:
         return {}
 
@@ -311,37 +396,37 @@ def compute_risk_metrics(daily_data: list[dict[str, Any]]) -> dict[str, Any]:
     # Max Drawdown
     peak = 1.0
     max_dd = 0.0
-    max_dd_peak_date = sorted_dates[0]
-    max_dd_trough_date = sorted_dates[0]
+    max_dd_peak_date = sorted_dates[0] if sorted_dates else "N/A"
+    max_dd_trough_date = sorted_dates[0] if sorted_dates else "N/A"
     running = 1.0
-    current_peak_date = sorted_dates[0]
+    current_peak_date = sorted_dates[0] if sorted_dates else "N/A"
 
     for i, r in enumerate(daily_returns):
         running *= (1 + r)
         if running > peak:
             peak = running
-            current_peak_date = sorted_dates[i + 1]
-        dd = (peak - running) / peak
+            current_peak_date = sorted_dates[i]
+        dd = (peak - running) / peak if peak > 0 else 0
         if dd > max_dd:
             max_dd = dd
             max_dd_peak_date = current_peak_date
-            max_dd_trough_date = sorted_dates[i + 1]
+            max_dd_trough_date = sorted_dates[i]
 
     # Monthly returns for best/worst
     monthly: dict[str, list[float]] = defaultdict(list)
     for i, r in enumerate(daily_returns):
-        month_key = sorted_dates[i + 1][:7]
+        month_key = sorted_dates[i][:7]
         monthly[month_key].append(r)
 
-    monthly_returns = {}
+    monthly_returns_map = {}
     for mk, rets in monthly.items():
         compounded = 1.0
         for r in rets:
             compounded *= (1 + r)
-        monthly_returns[mk] = (compounded - 1) * 100
+        monthly_returns_map[mk] = (compounded - 1) * 100
 
-    best_month = max(monthly_returns.items(), key=lambda x: x[1]) if monthly_returns else ("N/A", 0)
-    worst_month = min(monthly_returns.items(), key=lambda x: x[1]) if monthly_returns else ("N/A", 0)
+    best_month = max(monthly_returns_map.items(), key=lambda x: x[1]) if monthly_returns_map else ("N/A", 0)
+    worst_month = min(monthly_returns_map.items(), key=lambda x: x[1]) if monthly_returns_map else ("N/A", 0)
 
     return {
         "itd_return_pct": round(itd_return, 2),
@@ -361,35 +446,20 @@ def compute_risk_metrics(daily_data: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def compute_cumulative_returns(daily_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Compute daily cumulative returns for total portfolio."""
-    from collections import defaultdict
-
+    """Compute daily cumulative returns using DailyPnL (excludes transfers)."""
     if not daily_data:
         return []
 
-    date_mv: dict[str, float] = defaultdict(float)
-    for row in daily_data:
-        d = str(row.get("Date", ""))[:10]
-        mv = float(row.get("MarketValue", 0) or 0)
-        date_mv[d] += mv
-
-    sorted_dates = sorted(date_mv.keys())
-    if len(sorted_dates) < 2:
+    sorted_dates, daily_returns = _daily_returns_from_pnl(daily_data)
+    if not daily_returns:
         return []
 
-    result = [{"date": sorted_dates[0], "cumulative_pct": 0.0}]
+    result = []
     cumulative = 1.0
-    for i in range(1, len(sorted_dates)):
-        prev_mv = date_mv[sorted_dates[i - 1]]
-        curr_mv = date_mv[sorted_dates[i]]
-        if prev_mv > 0:
-            ret = (curr_mv - prev_mv) / prev_mv
-            ret = max(-0.15, min(0.15, ret))
-        else:
-            ret = 0.0
-        cumulative *= (1 + ret)
+    for d, r in zip(sorted_dates, daily_returns):
+        cumulative *= (1 + r)
         result.append({
-            "date": sorted_dates[i],
+            "date": d,
             "cumulative_pct": round((cumulative - 1) * 100, 2),
         })
 
@@ -397,53 +467,66 @@ def compute_cumulative_returns(daily_data: list[dict[str, Any]]) -> list[dict[st
 
 
 def compute_rolling_metrics(daily_data: list[dict[str, Any]], window: int = 365) -> list[dict[str, Any]]:
-    """Compute rolling return and volatility (365-day window)."""
-    from collections import defaultdict
-    import math
-
+    """Compute rolling 365-day return and volatility using DailyPnL."""
     if not daily_data:
         return []
 
-    date_mv: dict[str, float] = defaultdict(float)
-    for row in daily_data:
-        d = str(row.get("Date", ""))[:10]
-        mv = float(row.get("MarketValue", 0) or 0)
-        date_mv[d] += mv
-
-    sorted_dates = sorted(date_mv.keys())
-    if len(sorted_dates) < window + 1:
+    sorted_dates, daily_returns = _daily_returns_from_pnl(daily_data)
+    if len(daily_returns) < window:
         return []
-
-    # Daily returns
-    daily_returns: list[tuple[str, float]] = []
-    for i in range(1, len(sorted_dates)):
-        prev_mv = date_mv[sorted_dates[i - 1]]
-        curr_mv = date_mv[sorted_dates[i]]
-        if prev_mv > 0:
-            ret = (curr_mv - prev_mv) / prev_mv
-            ret = max(-0.15, min(0.15, ret))
-        else:
-            ret = 0.0
-        daily_returns.append((sorted_dates[i], ret))
 
     result = []
     for i in range(window, len(daily_returns)):
-        window_returns = [r for _, r in daily_returns[i - window:i]]
+        window_rets = daily_returns[i - window:i]
         # Rolling return
         cum = 1.0
-        for r in window_returns:
+        for r in window_rets:
             cum *= (1 + r)
         rolling_return = (cum - 1) * 100
 
         # Rolling volatility
-        mean_r = sum(window_returns) / len(window_returns)
-        var = sum((r - mean_r) ** 2 for r in window_returns) / max(len(window_returns) - 1, 1)
+        mean_r = sum(window_rets) / len(window_rets)
+        var = sum((r - mean_r) ** 2 for r in window_rets) / max(len(window_rets) - 1, 1)
         rolling_vol = math.sqrt(var) * math.sqrt(252) * 100
 
         result.append({
-            "date": daily_returns[i][0],
+            "date": sorted_dates[i],
             "return_365d": round(rolling_return, 2),
             "vol_365d": round(rolling_vol, 2),
         })
+
+    return result
+
+
+def compute_period_vol(daily_data: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compute annualised volatility for various lookback periods.
+
+    Returns vol for QTD, YTD, 1Y, 3Y and ITD windows.
+    """
+    if not daily_data:
+        return {}
+
+    sorted_dates, daily_returns = _daily_returns_from_pnl(daily_data)
+    if not daily_returns:
+        return {}
+
+    def _ann_vol(rets: list[float]) -> float:
+        if len(rets) < 2:
+            return 0.0
+        m = sum(rets) / len(rets)
+        var = sum((r - m) ** 2 for r in rets) / (len(rets) - 1)
+        return math.sqrt(var) * math.sqrt(252) * 100
+
+    n = len(daily_returns)
+    result: dict[str, float] = {}
+
+    # ITD
+    result["itd_vol"] = round(_ann_vol(daily_returns), 2)
+
+    # Period lookbacks (approximate trading days)
+    periods = {"qtd": 63, "ytd": 252, "1y": 252, "3y": 756}
+    for label, days in periods.items():
+        window = min(days, n)
+        result[f"{label}_vol"] = round(_ann_vol(daily_returns[-window:]), 2)
 
     return result

@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
-import { useCIOMonthlyReturns, useCIOTwror, type TwrorRow } from '@/hooks/useCIOData'
+import { useCIOMonthlyReturns, useCIOTwror } from '@/hooks/useCIOData'
 import { Spinner } from '@/components/generic/Spinner'
 
 type Props = {
@@ -44,13 +44,15 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
 
   const loading = mLoading || tLoading
 
-  // Waterfall data from TWROR
+  // Waterfall data from TWROR — now using correct column names
   const waterfallData = twrorData.map((row) => ({
     name: row.FBSIShortName || row.account_number,
-    mtd: parseFloat(((row.mtd_twror ?? 0) * 100).toFixed(2)),
     qtd: parseFloat(((row.qtd_twror ?? 0) * 100).toFixed(2)),
     ytd: parseFloat(((row.ytd_twror ?? 0) * 100).toFixed(2)),
-    itd: parseFloat(((row.itd_twror ?? 0) * 100).toFixed(2)),
+    '1y': parseFloat(((row.one_year_twror ?? 0) * 100).toFixed(2)),
+    '3y': parseFloat(((row.three_year_twror ?? 0) * 100).toFixed(2)),
+    '5y': parseFloat(((row.five_year_twror ?? 0) * 100).toFixed(2)),
+    itd: parseFloat(((row.inception_twror ?? 0) * 100).toFixed(2)),
   }))
 
   return (
@@ -64,15 +66,21 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
           <div className="flex items-center justify-center py-10">
             <Spinner className="text-emerald-400" />
           </div>
+        ) : twrorData.length === 0 ? (
+          <p className="py-6 text-center text-sm text-secondary-foreground">
+            No TWROR data available. Click <strong>Run</strong> to load.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-neutral-700 text-xs uppercase text-secondary-foreground">
                   <th className="px-3 py-2">Account</th>
-                  <th className="px-3 py-2 text-right">MTD</th>
                   <th className="px-3 py-2 text-right">QTD</th>
                   <th className="px-3 py-2 text-right">YTD</th>
+                  <th className="px-3 py-2 text-right">1 Year</th>
+                  <th className="px-3 py-2 text-right">3 Year</th>
+                  <th className="px-3 py-2 text-right">5 Year</th>
                   <th className="px-3 py-2 text-right">ITD</th>
                 </tr>
               </thead>
@@ -85,10 +93,12 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
                     <td className="px-3 py-2.5 font-medium text-primary-foreground">
                       {row.FBSIShortName || row.account_number}
                     </td>
-                    <ReturnCell value={row.mtd_twror} />
                     <ReturnCell value={row.qtd_twror} />
                     <ReturnCell value={row.ytd_twror} />
-                    <ReturnCell value={row.itd_twror} />
+                    <ReturnCell value={row.one_year_twror} />
+                    <ReturnCell value={row.three_year_twror} />
+                    <ReturnCell value={row.five_year_twror} />
+                    <ReturnCell value={row.inception_twror} />
                   </tr>
                 ))}
               </tbody>
@@ -155,7 +165,7 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
       {/* Monthly Returns Bar Chart */}
       <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
         <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
-          Monthly Returns
+          Monthly Returns (Transfer-Adjusted)
         </h3>
         {mLoading ? (
           <div className="flex items-center justify-center py-10">

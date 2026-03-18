@@ -19,12 +19,15 @@ from api.rest.me import MeHandler
 from api.rest.monitoring import MonitoringRunHandler
 from api.rest.cio import (
     CIOAccountsHandler,
+    CIOCapitalCallsTimelineHandler,
     CIOClientsHandler,
     CIOCumulativeReturnsHandler,
     CIODailyPnlHandler,
     CIOEntitiesHandler,
     CIOMarketValuesHandler,
     CIOMonthlyReturnsHandler,
+    CIOPeriodVolHandler,
+    CIORaFundHoldingsHandler,
     CIORiskMetricsHandler,
     CIORollingMetricsHandler,
     CIOTwrorHandler,
@@ -71,6 +74,9 @@ def create_app() -> tornado.web.Application:
             (r"/api/cio/risk-metrics", CIORiskMetricsHandler),
             (r"/api/cio/cumulative-returns", CIOCumulativeReturnsHandler),
             (r"/api/cio/rolling-metrics", CIORollingMetricsHandler),
+            (r"/api/cio/period-vol", CIOPeriodVolHandler),
+            (r"/api/cio/ra-fund-holdings", CIORaFundHoldingsHandler),
+            (r"/api/cio/capital-calls-timeline", CIOCapitalCallsTimelineHandler),
             # Rebalancer endpoints (BigQuery-backed)
             (r"/api/rebalancer/clients", RebalancerClientsHandler),
             (r"/api/rebalancer/targets", RebalancerTargetsHandler),

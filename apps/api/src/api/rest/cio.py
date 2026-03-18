@@ -243,3 +243,67 @@ class CIORollingMetricsHandler(BaseAPIHandler):
         except Exception as exc:
             logger.error("cio.rolling failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
             self.write_json(500, {"error": {"message": str(exc)}})
+
+
+class CIOPeriodVolHandler(BaseAPIHandler):
+    """GET /api/cio/period-vol?report_date=...&accounts=... — period volatilities."""
+
+    async def get(self) -> None:
+        if not _require_auth(self):
+            return
+        report_date = self.get_argument("report_date", "")
+        accounts_csv = self.get_argument("accounts", "")
+        if not report_date:
+            self.write_json(400, {"error": {"message": "report_date is required."}})
+            return
+
+        accounts = [a.strip() for a in accounts_csv.split(",") if a.strip()] if accounts_csv else None
+        try:
+            from api.services.cio_bigquery import compute_period_vol, get_daily_pnl_data
+
+            daily = await get_daily_pnl_data(report_date, accounts)
+            vol = compute_period_vol(daily)
+            self.write_json(200, {"vol": vol})
+        except Exception as exc:
+            logger.error("cio.period_vol failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
+            self.write_json(500, {"error": {"message": str(exc)}})
+
+
+class CIORaFundHoldingsHandler(BaseAPIHandler):
+    """GET /api/cio/ra-fund-holdings?report_date=... — RA/VC fund holdings."""
+
+    async def get(self) -> None:
+        if not _require_auth(self):
+            return
+        report_date = self.get_argument("report_date", "")
+        if not report_date:
+            self.write_json(400, {"error": {"message": "report_date is required."}})
+            return
+        try:
+            from api.services.cio_bigquery import get_ra_fund_holdings
+
+            rows = await get_ra_fund_holdings(report_date)
+            self.write_json(200, {"rows": rows, "count": len(rows)})
+        except Exception as exc:
+            logger.error("cio.ra_fund_holdings failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
+            self.write_json(500, {"error": {"message": str(exc)}})
+
+
+class CIOCapitalCallsTimelineHandler(BaseAPIHandler):
+    """GET /api/cio/capital-calls-timeline?report_date=... — capital call & distribution timeline."""
+
+    async def get(self) -> None:
+        if not _require_auth(self):
+            return
+        report_date = self.get_argument("report_date", "")
+        if not report_date:
+            self.write_json(400, {"error": {"message": "report_date is required."}})
+            return
+        try:
+            from api.services.cio_bigquery import get_capital_calls_timeline
+
+            rows = await get_capital_calls_timeline(report_date)
+            self.write_json(200, {"rows": rows, "count": len(rows)})
+        except Exception as exc:
+            logger.error("cio.capital_calls_timeline failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
+            self.write_json(500, {"error": {"message": str(exc)}})

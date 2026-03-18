@@ -16,8 +16,6 @@ import useCurrentUser from '@/hooks/useCurrentUser'
 import { useCIOClients, useCIOEntities, useCIOAccounts, useCIOMarketValues } from '@/hooks/useCIOData'
 import { Spinner } from '@/components/generic/Spinner'
 import { Button } from '@/components/generic/Button'
-import { isUnauthorizedApolloError } from '@/lib/isUnauthorizedApolloError'
-
 import SummaryTab from './tabs/SummaryTab'
 import PerformanceTab from './tabs/PerformanceTab'
 import RiskTab from './tabs/RiskTab'
