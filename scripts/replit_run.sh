@@ -5,22 +5,16 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PID_DIR="$ROOT_DIR/.run/dev"
 cd "$ROOT_DIR"
 
+# Ensure uv is on PATH (installed to workspace/.local/bin on Replit)
+if [[ -d "$HOME/workspace/.local/bin" ]]; then
+  export PATH="$HOME/workspace/.local/bin:$PATH"
+fi
+
 # shellcheck disable=SC1091
 source "$ROOT_DIR/scripts/process_helpers.sh"
 
-if [[ -f .env ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-fi
-
-if [[ -f .env.local ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env.local
-  set +a
-fi
+# Force SQLite for Replit — always override to avoid psycopg2 issues
+export DATABASE_URL="sqlite+aiosqlite:///tmp/scaffold-replit.db"
 
 export APP_ENV="${APP_ENV:-local}"
 export AUTH_ALLOWED_EMAIL_DOMAINS="${AUTH_ALLOWED_EMAIL_DOMAINS:-}"
@@ -35,11 +29,6 @@ export LLM_LOCAL_BASE_URL="${LLM_LOCAL_BASE_URL:-http://127.0.0.1:8002}"
 
 if command -v corepack >/dev/null 2>&1; then
   corepack enable >/dev/null 2>&1 || true
-fi
-
-# Replit default: SQLite unless a Postgres URL is supplied via Secrets.
-if [[ -z "${DATABASE_URL:-}" ]]; then
-  export DATABASE_URL="sqlite+aiosqlite:///tmp/scaffold-replit.db"
 fi
 
 LLM_PID=""
