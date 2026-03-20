@@ -67,6 +67,26 @@ export type PeriodVol = {
   itd_vol: number
 }
 
+export type AccountSummaryFund = {
+  fund: string
+  beginning_value: number
+  ending_value: number
+  net_contributions_withdrawals: number
+  investment_earnings: number
+}
+
+export type AccountSummary = {
+  beginning_value: number
+  ending_value: number
+  net_contributions_withdrawals: number
+  investment_earnings: number
+}
+
+export type AssetClassRow = {
+  asset_class: string
+  market_value: number
+}
+
 export type RaFundHolding = {
   fund_name: string
   asset_class: string
@@ -91,17 +111,26 @@ export function useCIOClients() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (retries = 2) => {
     setLoading(true)
     setError(null)
-    try {
-      const res = await requestApiJson<{ clients: string[] }>('/api/cio/clients')
-      setClients(res.clients)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load clients')
-    } finally {
-      setLoading(false)
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await requestApiJson<{ clients: string[] }>('/api/cio/clients')
+        setClients(res.clients)
+        setError(null)
+        setLoading(false)
+        return
+      } catch (err: any) {
+        if (attempt < retries) {
+          // Wait a bit before retrying (BigQuery cold start may need time)
+          await new Promise((r) => setTimeout(r, 2000))
+        } else {
+          setError(err.message || 'Failed to load clients')
+        }
+      }
     }
+    setLoading(false)
   }, [])
 
   useEffect(() => { void fetch() }, [fetch])
@@ -298,6 +327,53 @@ export function useCIOPeriodVol(reportDate: string, accounts: string[]) {
       setData(res.vol)
     } catch {
       setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [reportDate, accounts])
+
+  return { data, loading, fetch }
+}
+
+export function useCIOAccountSummary(reportDate: string, clientName: string, accounts: string[]) {
+  const [totals, setTotals] = useState<AccountSummary | null>(null)
+  const [funds, setFunds] = useState<AccountSummaryFund[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!reportDate || !clientName) return
+    setLoading(true)
+    try {
+      const accountsCsv = accounts.length > 0 ? accounts.join(',') : ''
+      const url = `/api/cio/account-summary?report_date=${encodeURIComponent(reportDate)}&client_name=${encodeURIComponent(clientName)}${accountsCsv ? `&accounts=${encodeURIComponent(accountsCsv)}` : ''}`
+      const res = await requestApiJson<{ funds: AccountSummaryFund[]; totals: AccountSummary }>(url)
+      setTotals(res.totals)
+      setFunds(res.funds)
+    } catch {
+      setTotals(null)
+      setFunds([])
+    } finally {
+      setLoading(false)
+    }
+  }, [reportDate, clientName, accounts])
+
+  return { totals, funds, loading, fetch }
+}
+
+export function useCIOAssetClass(reportDate: string, accounts: string[]) {
+  const [data, setData] = useState<AssetClassRow[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!reportDate) return
+    setLoading(true)
+    try {
+      const accountsCsv = accounts.length > 0 ? accounts.join(',') : ''
+      const url = `/api/cio/asset-class?report_date=${encodeURIComponent(reportDate)}${accountsCsv ? `&accounts=${encodeURIComponent(accountsCsv)}` : ''}`
+      const res = await requestApiJson<{ rows: AssetClassRow[] }>(url)
+      setData(res.rows)
+    } catch {
+      setData([])
     } finally {
       setLoading(false)
     }

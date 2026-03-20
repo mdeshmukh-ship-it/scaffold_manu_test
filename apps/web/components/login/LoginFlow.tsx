@@ -15,6 +15,7 @@ type StartAuthResponse = {
 
 const LoginFlow = () => {
   const router = useRouter()
+  const nextUrl = (router.query.next as string) || '/'
   const [phase, setPhase] = useState<LoginPhase>('email')
   const [email, setEmail] = useState('builder@example.com')
   const [code, setCode] = useState('')
@@ -55,7 +56,7 @@ const LoginFlow = () => {
         method: 'POST',
         body: { email, code },
       })
-      await router.push('/')
+      await router.push(nextUrl)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {
@@ -74,7 +75,7 @@ const LoginFlow = () => {
         method: 'POST',
         body: { username: devUsername, password: devPassword },
       })
-      await router.push('/')
+      await router.push(nextUrl)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {

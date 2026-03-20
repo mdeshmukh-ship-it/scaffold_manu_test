@@ -19,6 +19,8 @@ from api.rest.me import MeHandler
 from api.rest.monitoring import MonitoringRunHandler
 from api.rest.cio import (
     CIOAccountsHandler,
+    CIOAccountSummaryHandler,
+    CIOAssetClassHandler,
     CIOCapitalCallsTimelineHandler,
     CIOClientsHandler,
     CIOCumulativeReturnsHandler,
@@ -75,6 +77,8 @@ def create_app() -> tornado.web.Application:
             (r"/api/cio/cumulative-returns", CIOCumulativeReturnsHandler),
             (r"/api/cio/rolling-metrics", CIORollingMetricsHandler),
             (r"/api/cio/period-vol", CIOPeriodVolHandler),
+            (r"/api/cio/account-summary", CIOAccountSummaryHandler),
+            (r"/api/cio/asset-class", CIOAssetClassHandler),
             (r"/api/cio/ra-fund-holdings", CIORaFundHoldingsHandler),
             (r"/api/cio/capital-calls-timeline", CIOCapitalCallsTimelineHandler),
             # Rebalancer endpoints (BigQuery-backed)
@@ -89,6 +93,27 @@ def create_app() -> tornado.web.Application:
         debug=settings.app_env == "local",
         cookie_secret=settings.session_secret,
     )
+
+
+async def _prewarm_caches() -> None:
+    """Pre-warm slow BigQuery caches so the first page load is fast."""
+    try:
+        from api.services.bigquery_client import get_all_clients
+
+        clients = await get_all_clients()
+        logger.info(
+            "Pre-warmed clients cache",
+            event_type="app.prewarm",
+            severity="INFO",
+            client_count=len(clients),
+        )
+    except Exception as exc:
+        logger.warning(
+            "Failed to pre-warm clients cache (will retry on first request)",
+            event_type="app.prewarm_failed",
+            severity="WARNING",
+            error_message=str(exc)[:256],
+        )
 
 
 async def run() -> None:
@@ -106,6 +131,8 @@ async def run() -> None:
         host=settings.app_host,
         port=settings.app_port,
     )
+    # Pre-warm BigQuery caches in the background (don't block startup)
+    asyncio.create_task(_prewarm_caches())
     await asyncio.Event().wait()
 
 

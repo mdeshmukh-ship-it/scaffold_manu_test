@@ -269,6 +269,73 @@ class CIOPeriodVolHandler(BaseAPIHandler):
             self.write_json(500, {"error": {"message": str(exc)}})
 
 
+class CIOAccountSummaryHandler(BaseAPIHandler):
+    """GET /api/cio/account-summary?report_date=...&client_name=...&accounts=... — QTD account summary."""
+
+    async def get(self) -> None:
+        if not _require_auth(self):
+            return
+        report_date = self.get_argument("report_date", "")
+        client_name = self.get_argument("client_name", "")
+        accounts_csv = self.get_argument("accounts", "")
+        if not report_date or not client_name:
+            self.write_json(400, {"error": {"message": "report_date and client_name are required."}})
+            return
+
+        accounts = [a.strip() for a in accounts_csv.split(",") if a.strip()] if accounts_csv else None
+        try:
+            from api.services.cio_bigquery import get_account_summary
+
+            fund_rows = await get_account_summary(report_date, client_name, accounts)
+            logger.info(
+                "account_summary fund_rows",
+                event_type="cio.debug",
+                severity="INFO",
+                fund_count=len(fund_rows),
+                funds=[{k: v for k, v in r.items()} for r in fund_rows],
+            )
+            # Compute totals across all fund types
+            totals = {
+                "beginning_value": sum(float(r.get("beginning_value", 0) or 0) for r in fund_rows),
+                "ending_value": sum(float(r.get("ending_value", 0) or 0) for r in fund_rows),
+                "net_contributions_withdrawals": sum(float(r.get("net_contributions_withdrawals", 0) or 0) for r in fund_rows),
+                "investment_earnings": sum(float(r.get("investment_earnings", 0) or 0) for r in fund_rows),
+            }
+            logger.info(
+                "account_summary totals",
+                event_type="cio.debug",
+                severity="INFO",
+                totals=totals,
+            )
+            self.write_json(200, {"funds": fund_rows, "totals": totals})
+        except Exception as exc:
+            logger.error("cio.account_summary failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
+            self.write_json(500, {"error": {"message": str(exc)}})
+
+
+class CIOAssetClassHandler(BaseAPIHandler):
+    """GET /api/cio/asset-class?report_date=...&accounts=... — asset class breakdown."""
+
+    async def get(self) -> None:
+        if not _require_auth(self):
+            return
+        report_date = self.get_argument("report_date", "")
+        accounts_csv = self.get_argument("accounts", "")
+        if not report_date:
+            self.write_json(400, {"error": {"message": "report_date is required."}})
+            return
+
+        accounts = [a.strip() for a in accounts_csv.split(",") if a.strip()] if accounts_csv else None
+        try:
+            from api.services.cio_bigquery import get_asset_class_breakdown
+
+            rows = await get_asset_class_breakdown(report_date, accounts)
+            self.write_json(200, {"rows": rows})
+        except Exception as exc:
+            logger.error("cio.asset_class failed", event_type="cio.error", severity="ERROR", error_message=str(exc)[:256])
+            self.write_json(500, {"error": {"message": str(exc)}})
+
+
 class CIORaFundHoldingsHandler(BaseAPIHandler):
     """GET /api/cio/ra-fund-holdings?report_date=... — RA/VC fund holdings."""
 

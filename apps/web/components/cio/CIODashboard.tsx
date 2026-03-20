@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 
 import useCurrentUser from '@/hooks/useCurrentUser'
-import { useCIOClients, useCIOEntities, useCIOAccounts, useCIOMarketValues } from '@/hooks/useCIOData'
+import { useCIOClients, useCIOEntities, useCIOAccounts, useCIOMarketValues, useCIOAccountSummary, useCIOAssetClass } from '@/hooks/useCIOData'
 import { Spinner } from '@/components/generic/Spinner'
 import { Button } from '@/components/generic/Button'
 import SummaryTab from './tabs/SummaryTab'
@@ -55,7 +55,9 @@ const CIODashboard = () => {
   const { clients, loading: clientsLoading } = useCIOClients()
   const { entities } = useCIOEntities(selectedClient)
   const { accounts } = useCIOAccounts(selectedClient, selectedEntities)
-  const { data: mvData, loading: mvLoading, fetch: fetchMV } = useCIOMarketValues(reportDate, selectedAccounts)
+  const { data: mvData, loading: mvLoading, error: mvError, fetch: fetchMV } = useCIOMarketValues(reportDate, selectedAccounts)
+  const { totals: accountSummary, funds: accountSummaryFunds, loading: summaryLoading, fetch: fetchSummary } = useCIOAccountSummary(reportDate, selectedClient, selectedAccounts)
+  const { data: assetClassData, loading: assetClassLoading, fetch: fetchAssetClass } = useCIOAssetClass(reportDate, selectedAccounts)
 
   // Auto-select first client
   useEffect(() => {
@@ -71,23 +73,25 @@ const CIODashboard = () => {
     }
   }, [entities])
 
-  // Auto-select all accounts
+  // Auto-select all accounts (use AccountNumber for reliable API filtering)
   useEffect(() => {
     if (accounts.length > 0) {
-      setSelectedAccounts(accounts.map((a) => a.AccountName))
+      setSelectedAccounts(accounts.map((a) => a.AccountNumber))
     }
   }, [accounts])
 
   // Login redirect
   useEffect(() => {
     if (isUnauthorized || (!userLoading && !currentUser)) {
-      void router.replace('/login')
+      void router.replace('/login?next=/cio')
     }
   }, [router, isUnauthorized, userLoading, currentUser])
 
   const handleRun = useCallback(() => {
     void fetchMV()
-  }, [fetchMV])
+    void fetchSummary()
+    void fetchAssetClass()
+  }, [fetchMV, fetchSummary, fetchAssetClass])
 
   if (userLoading) {
     return (
@@ -146,14 +150,17 @@ const CIODashboard = () => {
             </label>
             <select
               value={selectedClient}
+              disabled={clientsLoading}
               onChange={(e) => {
                 setSelectedClient(e.target.value)
                 setSelectedEntities([])
                 setSelectedAccounts([])
               }}
-              className="rounded-md border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-primary-foreground outline-none focus:border-blue-500"
+              className="rounded-md border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-primary-foreground outline-none focus:border-blue-500 disabled:opacity-50"
             >
-              <option value="">Select client...</option>
+              <option value="">
+                {clientsLoading ? 'Loading clients...' : 'Select client...'}
+              </option>
               {clients.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -199,7 +206,7 @@ const CIODashboard = () => {
               className="h-[34px] min-w-[200px] rounded-md border border-neutral-700 bg-neutral-800 px-2 text-xs text-primary-foreground outline-none focus:border-blue-500"
             >
               {accounts.map((a) => (
-                <option key={a.AccountNumber} value={a.AccountName}>
+                <option key={a.AccountNumber} value={a.AccountNumber}>
                   {a.AccountName}
                 </option>
               ))}
@@ -242,6 +249,15 @@ const CIODashboard = () => {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {mvError && (
+        <div className="mx-auto mt-2 max-w-[1400px] px-6">
+          <div className="rounded-lg border border-rose-700/50 bg-rose-900/30 px-4 py-3 text-sm text-rose-300">
+            <strong>Error:</strong> {mvError}
+          </div>
+        </div>
+      )}
+
       {/* Tab Content */}
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-[1400px]">
@@ -252,6 +268,11 @@ const CIODashboard = () => {
               mvData={mvData}
               loading={mvLoading}
               onRun={handleRun}
+              accountSummary={accountSummary}
+              accountSummaryFunds={accountSummaryFunds}
+              accountSummaryLoading={summaryLoading}
+              assetClassData={assetClassData}
+              assetClassLoading={assetClassLoading}
             />
           )}
           {activeTab === 'performance' && (

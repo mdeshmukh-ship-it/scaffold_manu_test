@@ -6,10 +6,9 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
-  Treemap,
 } from 'recharts'
 import { DollarSign, TrendingUp, Users, Briefcase } from 'lucide-react'
-import type { AccountRow } from '@/hooks/useCIOData'
+import type { AccountRow, AccountSummary, AccountSummaryFund, AssetClassRow } from '@/hooks/useCIOData'
 
 type Props = {
   reportDate: string
@@ -17,6 +16,11 @@ type Props = {
   mvData: { rows: AccountRow[]; total_mv: number; count: number } | null
   loading: boolean
   onRun: () => void
+  accountSummary: AccountSummary | null
+  accountSummaryFunds: AccountSummaryFund[]
+  accountSummaryLoading: boolean
+  assetClassData: AssetClassRow[]
+  assetClassLoading: boolean
 }
 
 const COLORS = [
@@ -32,7 +36,29 @@ const formatCurrency = (v: number) => {
   return `$${v.toFixed(0)}`
 }
 
-export default function SummaryTab({ reportDate, accounts, mvData, loading, onRun }: Props) {
+const ASSET_CLASS_COLORS: Record<string, string> = {
+  Cash: '#0B2545',
+  'Fixed Income': '#1B4D3E',
+  Equity: '#4682B4',
+  'Venture Capital': '#C4B998',
+  Other: '#9370DB',
+}
+
+const formatDollar = (v: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v)
+
+export default function SummaryTab({
+  reportDate,
+  accounts,
+  mvData,
+  loading,
+  onRun,
+  accountSummary,
+  accountSummaryFunds,
+  accountSummaryLoading,
+  assetClassData,
+  assetClassLoading,
+}: Props) {
   const accountBreakdown = useMemo(() => {
     if (!mvData?.rows) return []
     const grouped: Record<string, number> = {}
@@ -56,6 +82,15 @@ export default function SummaryTab({ reportDate, accounts, mvData, loading, onRu
       .map(([name, value]) => ({ name, value: Math.round(value) }))
       .sort((a, b) => b.value - a.value)
   }, [mvData])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <div className="size-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+        <p className="text-secondary-foreground">Loading portfolio data...</p>
+      </div>
+    )
+  }
 
   if (!mvData && !loading) {
     return (
@@ -98,8 +133,142 @@ export default function SummaryTab({ reportDate, accounts, mvData, loading, onRu
         />
       </div>
 
+      {/* Account Summary (QTD) */}
+      <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
+        <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
+          Account Summary
+        </h3>
+        {accountSummaryLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="size-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+          </div>
+        ) : accountSummary ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-700 text-xs uppercase text-secondary-foreground">
+                  <th className="px-4 py-2 text-left">Metrics</th>
+                  <th className="px-4 py-2 text-right">Quarter-to-Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-neutral-750/50">
+                  <td className="px-4 py-2.5 text-secondary-foreground">Beginning Total Value</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                    {formatDollar(accountSummary.beginning_value)}
+                  </td>
+                </tr>
+                <tr className="border-b border-neutral-750/50">
+                  <td className="px-4 py-2.5 text-secondary-foreground">Net Contributions/Withdrawals</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                    {formatDollar(accountSummary.net_contributions_withdrawals)}
+                  </td>
+                </tr>
+                <tr className="border-b border-neutral-750/50">
+                  <td className="px-4 py-2.5 text-secondary-foreground">Investment Earnings</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                    {formatDollar(accountSummary.investment_earnings)}
+                  </td>
+                </tr>
+                <tr className="border-b border-neutral-700">
+                  <td className="px-4 py-2.5 font-semibold text-primary-foreground">Ending Total Value</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-400">
+                    {formatDollar(accountSummary.ending_value)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            {/* Per-fund breakdown */}
+            {accountSummaryFunds.length > 1 && (
+              <div className="mt-4 border-t border-neutral-700 pt-3">
+                <p className="mb-2 text-[11px] font-medium uppercase text-secondary-foreground">
+                  By Fund Type
+                </p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-neutral-750 text-[10px] uppercase text-secondary-foreground">
+                      <th className="px-3 py-1 text-left">Fund</th>
+                      <th className="px-3 py-1 text-right">Beginning</th>
+                      <th className="px-3 py-1 text-right">Net Flows</th>
+                      <th className="px-3 py-1 text-right">Earnings</th>
+                      <th className="px-3 py-1 text-right">Ending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accountSummaryFunds.map((f) => (
+                      <tr key={f.fund} className="border-b border-neutral-750/30">
+                        <td className="px-3 py-1.5 font-medium text-primary-foreground">{f.fund}</td>
+                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.beginning_value)}</td>
+                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.net_contributions_withdrawals)}</td>
+                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.investment_earnings)}</td>
+                        <td className="px-3 py-1.5 text-right font-mono text-primary-foreground">{formatDollar(f.ending_value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="py-4 text-center text-sm text-secondary-foreground">
+            No account summary data available.
+          </p>
+        )}
+      </div>
+
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Asset Class Breakdown */}
+        <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
+            Asset Class Breakdown
+          </h3>
+          {assetClassLoading ? (
+            <div className="flex h-[320px] items-center justify-center">
+              <div className="size-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+            </div>
+          ) : assetClassData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie
+                  data={assetClassData.map((r) => ({
+                    name: r.asset_class,
+                    value: Math.round(r.market_value),
+                  }))}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {assetClassData.map((r, i) => (
+                    <Cell
+                      key={r.asset_class}
+                      fill={ASSET_CLASS_COLORS[r.asset_class] || COLORS[i % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(v: number) => formatCurrency(v)}
+                  contentStyle={{
+                    backgroundColor: '#1a2234',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: '#e6e8ee',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px', color: '#9ea3ad' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-[320px] items-center justify-center text-sm text-secondary-foreground">
+              No data
+            </div>
+          )}
+        </div>
+
         {/* Pie Chart - Account Allocation */}
         <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
           <h3 className="mb-4 text-sm font-semibold text-primary-foreground">

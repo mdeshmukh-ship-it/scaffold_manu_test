@@ -3,9 +3,12 @@
 Mirrors the SQL queries from the Hex CIO Client Reporting project,
 adapted for the BigQuery Python client with parameterised queries.
 
-IMPORTANT: All return calculations use the DailyPnL column so that
-cash-flow transfers are excluded from performance numbers.
-    daily_return = DailyPnL / (MarketValue - DailyPnL)
+Data sources:
+  - ``fidelity.accounts``  – account master data
+  - ``fidelity.daily_account_market_values``  – daily AUM snapshots
+  - ``returns.daily_liquid_returns``  – pre-computed daily TWROR
+  - ``returns.periodic_liquid_returns``  – QTD / YTD / 1Y / 3Y / ITD TWROR
+  - ``fidelity.private_asset_*``  – private asset valuations & capital calls
 """
 
 from __future__ import annotations
@@ -92,71 +95,96 @@ async def get_account_market_values(
 ) -> list[dict[str, Any]]:
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
-    account_filter = ""
     params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
 
     if accounts and len(accounts) > 0:
-        account_filter = "AND B.FBSIShortName IN UNNEST(@accounts)"
+        # Use LEFT JOIN so accounts without MV data still appear with $0
         params.append(bigquery.ArrayQueryParameter("accounts", "STRING", accounts))
-
-    query = f"""
-    SELECT
-      A.AccountNumber,
-      B.PrimaryAccountHolder,
-      B.FBSIShortName,
-      B.ClientName,
-      B.EstablishedDate,
-      A.MarketValue
-    FROM `perennial-data-prod.fidelity.daily_account_market_values` A
-    JOIN `perennial-data-prod.fidelity.accounts` B
-      ON A.AccountNumber = B.AccountNumber
-    WHERE A.Date = (
-      SELECT MAX(Date)
-      FROM `perennial-data-prod.fidelity.daily_account_market_values`
-      WHERE Date <= PARSE_DATE('%Y-%m-%d', @report_date)
-    )
-    {account_filter}
-    """
+        query = """
+        WITH MaxDate AS (
+          SELECT MAX(Date) AS max_date
+          FROM `perennial-data-prod.fidelity.daily_account_market_values`
+          WHERE Date <= PARSE_DATE('%Y-%m-%d', @report_date)
+        )
+        SELECT
+          B.AccountNumber,
+          B.PrimaryAccountHolder,
+          B.FBSIShortName,
+          B.ClientName,
+          B.EstablishedDate,
+          COALESCE(A.MarketValue, 0) AS MarketValue
+        FROM `perennial-data-prod.fidelity.accounts` B
+        CROSS JOIN MaxDate MD
+        LEFT JOIN `perennial-data-prod.fidelity.daily_account_market_values` A
+          ON A.AccountNumber = B.AccountNumber
+          AND A.Date = MD.max_date
+        WHERE B.AccountNumber IN UNNEST(@accounts)
+        """
+    else:
+        query = """
+        SELECT
+          A.AccountNumber,
+          B.PrimaryAccountHolder,
+          B.FBSIShortName,
+          B.ClientName,
+          B.EstablishedDate,
+          A.MarketValue
+        FROM `perennial-data-prod.fidelity.daily_account_market_values` A
+        JOIN `perennial-data-prod.fidelity.accounts` B
+          ON A.AccountNumber = B.AccountNumber
+        WHERE A.Date = (
+          SELECT MAX(Date)
+          FROM `perennial-data-prod.fidelity.daily_account_market_values`
+          WHERE Date <= PARSE_DATE('%Y-%m-%d', @report_date)
+        )
+        """
     return await _run_query(query, params)
 
 
 # ======================================================================
-# 2. Daily PnL Data  (NOW includes DailyPnL column!)
+# 2. Daily PnL Data  (from returns.daily_liquid_returns)
 # ======================================================================
 
 async def get_daily_pnl_data(
     report_date: str,
     accounts: list[str] | None = None,
 ) -> list[dict[str, Any]]:
+    """Fetch daily return data from the returns schema.
+
+    Uses ``returns.daily_liquid_returns`` which has pre-computed
+    ``daily_twror`` and ``beginning_market_value``.  We derive
+    ``DailyPnL = daily_twror * beginning_market_value`` so the
+    existing ``_daily_returns_from_pnl`` helper works unchanged.
+    """
     from google.cloud import bigquery  # type: ignore[import-untyped]
 
     account_filter = ""
     params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
 
     if accounts and len(accounts) > 0:
-        account_filter = "AND B.FBSIShortName IN UNNEST(@accounts)"
+        account_filter = "AND A.account_number IN UNNEST(@accounts)"
         params.append(bigquery.ArrayQueryParameter("accounts", "STRING", accounts))
 
     query = f"""
     SELECT
-      A.AccountNumber,
-      A.Date,
+      A.account_number  AS AccountNumber,
+      A.date            AS Date,
       B.FBSIShortName,
       B.PrimaryAccountHolder,
-      A.MarketValue,
-      A.DailyPnL
-    FROM `perennial-data-prod.fidelity.daily_account_market_values` A
+      A.ending_market_value                                       AS MarketValue,
+      COALESCE(A.daily_twror * A.beginning_market_value, 0)       AS DailyPnL
+    FROM `perennial-data-prod.returns.daily_liquid_returns` A
     JOIN `perennial-data-prod.fidelity.accounts` B
-      ON A.AccountNumber = B.AccountNumber
-    WHERE A.Date <= PARSE_DATE('%Y-%m-%d', @report_date)
+      ON A.account_number = B.AccountNumber
+    WHERE A.date <= PARSE_DATE('%Y-%m-%d', @report_date)
     {account_filter}
-    ORDER BY A.Date ASC
+    ORDER BY A.date ASC
     """
     return await _run_query(query, params)
 
 
 # ======================================================================
-# 3. TWROR Data  (correct column names from BigQuery)
+# 3. TWROR Data  (from returns.periodic_liquid_returns)
 # ======================================================================
 
 async def get_twror_data(
@@ -168,22 +196,28 @@ async def get_twror_data(
     params: list[Any] = []
 
     if accounts and len(accounts) > 0:
-        account_filter = "WHERE b.FBSIShortName IN UNNEST(@accounts)"
+        account_filter = "AND r.account_number IN UNNEST(@accounts)"
         params.append(bigquery.ArrayQueryParameter("accounts", "STRING", accounts))
 
     query = f"""
+    WITH LatestDate AS (
+      SELECT MAX(date) AS max_date
+      FROM `perennial-data-prod.returns.periodic_liquid_returns`
+    )
     SELECT
       r.account_number,
       b.FBSIShortName,
       r.qtd_twror,
       r.ytd_twror,
-      r.one_year_twror,
-      r.three_year_twror,
-      r.five_year_twror,
-      r.inception_twror
-    FROM `perennial-data-prod.fidelity.account_twror` r
+      r.trailing_1yr_annualized_twror AS one_year_twror,
+      r.trailing_3yr_annualized_twror AS three_year_twror,
+      CAST(NULL AS FLOAT64) AS five_year_twror,
+      r.itd_annualized_twror AS inception_twror
+    FROM `perennial-data-prod.returns.periodic_liquid_returns` r
+    CROSS JOIN LatestDate LD
     JOIN `perennial-data-prod.fidelity.accounts` b
       ON r.account_number = b.AccountNumber
+    WHERE r.date = LD.max_date
     {account_filter}
     """
     return await _run_query(query, params)
@@ -229,7 +263,267 @@ async def get_account_options(client_name: str, entities: list[str]) -> list[dic
 
 
 # ======================================================================
-# 5. RA Fund Holdings / Private Assets
+# 5. Account Summary (QTD: beginning value, ending value, flows, earnings)
+# ======================================================================
+
+async def get_account_summary(
+    report_date: str,
+    client_name: str,
+    accounts: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Compute QTD account summary across all fund types.
+
+    Exact replica of the Hex CIO Client Reporting queries:
+      - **Liquid**: ``fidelity.daily_account_market_values`` + ``client_reporting.daily_account_activity``
+      - **VC**: ``ssc.vc_capital_register``
+      - **DI**: ``ssc.di_capital_register``  (ARRAY_AGG + GROUP BY pattern)
+      - **RA**: ``ssc.ra_capital_roll``
+
+    Key date-logic differences from a naïve implementation:
+      - Beginning MV MAX(Date): filters by ALL family accounts (via ClientName)
+      - Ending MV MAX(Date): NO account filter at all (global max in quarter)
+      - Fund investment earnings are hardcoded to 0 (per Hex)
+
+    Returns per-fund rows; the API handler computes totals.
+    """
+    from google.cloud import bigquery  # type: ignore[import-untyped]
+
+    params = [
+        bigquery.ScalarQueryParameter("report_date", "STRING", report_date),
+        bigquery.ScalarQueryParameter("client_name", "STRING", client_name),
+    ]
+
+    # Account filter for selected accounts (used in outer SUM / net-flows only)
+    acct_filter = ""
+    if accounts and len(accounts) > 0:
+        acct_filter = "AND AccountNumber IN UNNEST(@accounts)"
+        params.append(bigquery.ArrayQueryParameter("accounts", "STRING", accounts))
+
+    query = f"""
+    WITH Params AS (
+      SELECT
+        PARSE_DATE('%Y-%m-%d', @report_date) AS report_end_date,
+        DATE_TRUNC(PARSE_DATE('%Y-%m-%d', @report_date), QUARTER) AS report_start_date
+    ),
+
+    -- ===== LIQUID: Beginning Value =====
+    -- MAX(Date) uses ALL family accounts; SUM uses selected accounts
+    LiquidBeginning AS (
+      SELECT COALESCE(SUM(MarketValue), 0) AS beginning_value
+      FROM `perennial-data-prod.fidelity.daily_account_market_values`
+      WHERE Date = (
+        SELECT MAX(Date)
+        FROM `perennial-data-prod.fidelity.daily_account_market_values`
+        WHERE Date < (SELECT report_start_date FROM Params)
+          AND AccountNumber IN (
+            SELECT DISTINCT AccountNumber
+            FROM `perennial-data-prod.fidelity.accounts`
+            WHERE ClientName = @client_name
+          )
+      )
+      {acct_filter}
+    ),
+
+    -- ===== LIQUID: Ending Value =====
+    -- MAX(Date) has NO account filter; SUM uses selected accounts
+    LiquidEnding AS (
+      SELECT COALESCE(SUM(MarketValue), 0) AS ending_value
+      FROM `perennial-data-prod.fidelity.daily_account_market_values`
+      WHERE Date = (
+        SELECT MAX(Date)
+        FROM `perennial-data-prod.fidelity.daily_account_market_values`
+        WHERE Date BETWEEN (SELECT report_start_date FROM Params)
+                        AND (SELECT report_end_date FROM Params)
+      )
+      {acct_filter}
+    ),
+
+    -- ===== LIQUID: Net Flows =====
+    LiquidNetFlows AS (
+      SELECT COALESCE(SUM(Deposits), 0) + COALESCE(SUM(Withdrawals), 0) AS net_flows
+      FROM `perennial-data-prod.client_reporting.daily_account_activity`
+      WHERE Date BETWEEN (SELECT report_start_date FROM Params)
+                      AND (SELECT report_end_date FROM Params)
+        {acct_filter}
+    ),
+
+    -- ===== PRIVATE FUND setup =====
+    MaxPrivatesAsOfDate AS (
+      SELECT MAX(quarter_end_date) AS max_date
+      FROM `perennial-data-prod.ssc.vc_capital_register`
+      WHERE TRIM(id) = 'USD Total'
+        AND name IS NULL
+        AND entity = 'PVCFLP'
+        AND quarter_end_date <= (SELECT report_end_date FROM Params)
+    ),
+
+    PrivateEntities AS (
+      SELECT DISTINCT ssc_entity_name
+      FROM `perennial-data-prod.client_reporting.fidelity_ssc_mapping`
+      WHERE fidelity_client_name = @client_name
+    ),
+
+    FundData AS (
+      -- VC
+      SELECT
+        'VC' AS fund,
+        name,
+        quarter_opening_net_capital AS beginning_balance,
+        qtd_contributions AS contributions,
+        qtd_redemptions AS distributions,
+        ending_net_balance AS ending_balance
+      FROM `perennial-data-prod.ssc.vc_capital_register`
+      WHERE name IN (SELECT ssc_entity_name FROM PrivateEntities)
+        AND quarter_end_date = (SELECT max_date FROM MaxPrivatesAsOfDate)
+      QUALIFY ROW_NUMBER() OVER(PARTITION BY name, quarter_end_date ORDER BY add_timestamp DESC) = 1
+
+      UNION ALL
+
+      -- DI  (ARRAY_AGG pattern – matches Hex exactly)
+      SELECT
+        fund,
+        name,
+        COALESCE(
+          ARRAY_AGG(month_opening_net_capital IGNORE NULLS
+                    ORDER BY month_end_date ASC LIMIT 1)[OFFSET(0)], 0
+        ) AS beginning_balance,
+        SUM(COALESCE(mtd_contributions, 0)) AS contributions,
+        SUM(COALESCE(mtd_redemptions, 0)) AS distributions,
+        COALESCE(
+          ARRAY_AGG(ending_net_balance IGNORE NULLS
+                    ORDER BY month_end_date DESC LIMIT 1)[OFFSET(0)], 0
+        ) AS ending_balance
+      FROM (
+        SELECT
+          'DI' AS fund,
+          name,
+          month_end_date,
+          month_opening_net_capital,
+          mtd_contributions,
+          mtd_redemptions,
+          ending_net_balance
+        FROM `perennial-data-prod.ssc.di_capital_register`
+        CROSS JOIN (SELECT max_date FROM MaxPrivatesAsOfDate)
+        WHERE name IN (SELECT ssc_entity_name FROM PrivateEntities)
+          AND month_end_date > LAST_DAY(DATE_SUB((SELECT report_end_date FROM Params), INTERVAL 3 MONTH))
+          AND month_end_date <= (SELECT report_end_date FROM Params)
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY name, month_end_date ORDER BY add_timestamp DESC) = 1
+      )
+      GROUP BY fund, name
+
+      UNION ALL
+
+      -- RA
+      SELECT
+        'RA' AS fund,
+        partner_name,
+        beginning_balance,
+        call_investments,
+        0 AS distributions,
+        ending_balance
+      FROM `perennial-data-prod.ssc.ra_capital_roll`
+      WHERE partner_name IN (SELECT ssc_entity_name FROM PrivateEntities)
+        AND end_date = (SELECT max_date FROM MaxPrivatesAsOfDate)
+      QUALIFY ROW_NUMBER() OVER(PARTITION BY partner_name, end_date ORDER BY add_timestamp DESC) = 1
+    ),
+
+    -- ===== Aggregate fund totals =====
+    FundTotals AS (
+      SELECT
+        COALESCE(SUM(beginning_balance), 0) AS fund_beginning,
+        COALESCE(SUM(contributions) + SUM(distributions), 0) AS fund_net_flows,
+        COALESCE(SUM(ending_balance), 0) AS fund_ending
+      FROM FundData
+    ),
+
+    -- ===== Liquid earnings (ending - net_flows - beginning) =====
+    LiquidEarnings AS (
+      SELECT
+        (SELECT ending_value FROM LiquidEnding)
+        - COALESCE((SELECT net_flows FROM LiquidNetFlows), 0)
+        - (SELECT beginning_value FROM LiquidBeginning) AS earnings
+    )
+
+    -- Return Liquid + Fund rows
+    SELECT
+      'Liquid' AS fund,
+      (SELECT beginning_value FROM LiquidBeginning) AS beginning_value,
+      (SELECT ending_value FROM LiquidEnding) AS ending_value,
+      (SELECT net_flows FROM LiquidNetFlows) AS net_contributions_withdrawals,
+      COALESCE((SELECT earnings FROM LiquidEarnings), 0) AS investment_earnings
+
+    UNION ALL
+
+    SELECT
+      fund,
+      COALESCE(SUM(beginning_balance), 0) AS beginning_value,
+      COALESCE(SUM(ending_balance), 0) AS ending_value,
+      COALESCE(SUM(contributions) + SUM(distributions), 0) AS net_contributions_withdrawals,
+      0 AS investment_earnings  -- Fund earnings = 0 per Hex
+    FROM FundData
+    GROUP BY fund
+    """
+    return await _run_query(query, params)
+
+
+# ======================================================================
+# 6. Asset Class Breakdown (positions classified by security type)
+# ======================================================================
+
+async def get_asset_class_breakdown(
+    report_date: str,
+    accounts: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Classify positions by asset class and sum market values.
+
+    Uses the same symbol/SecurityType mapping as the Hex CIO project.
+    """
+    from google.cloud import bigquery  # type: ignore[import-untyped]
+
+    account_filter = ""
+    params = [bigquery.ScalarQueryParameter("report_date", "STRING", report_date)]
+
+    if accounts and len(accounts) > 0:
+        account_filter = "AND dp.AccountNumber IN UNNEST(@accounts)"
+        params.append(bigquery.ArrayQueryParameter("accounts", "STRING", accounts))
+
+    query = f"""
+    WITH LatestPositionDate AS (
+      SELECT MAX(Date) AS max_date
+      FROM `perennial-data-prod.fidelity.daily_positions`
+      WHERE Date <= PARSE_DATE('%Y-%m-%d', @report_date)
+    ),
+
+    ClassifiedPositions AS (
+      SELECT
+        CASE
+          WHEN TRIM(dp.Symbol) IN ('QJXAQ','FRGXX','QIWSQ') THEN 'Cash'
+          WHEN TRIM(dp.Symbol) IN ('ISHUF','MUB','VTEB','NUVBX','NVHIX','PRIMX','VMLUX','AGG','CMF') THEN 'Fixed Income'
+          WHEN dp.SecurityType IN ('0','1','2','9') THEN 'Equity'
+          WHEN dp.SecurityType IN ('5','6','7') THEN 'Fixed Income'
+          WHEN dp.SecurityType IN ('F','C') THEN 'Cash'
+          ELSE 'Other'
+        END AS asset_class,
+        dp.PositionMarketValue
+      FROM `perennial-data-prod.fidelity.daily_positions` dp
+      CROSS JOIN LatestPositionDate lpd
+      WHERE dp.Date = lpd.max_date
+        AND dp.SecurityType NOT IN (' ', '8')
+        {account_filter}
+    )
+
+    SELECT
+      asset_class,
+      SUM(PositionMarketValue) AS market_value
+    FROM ClassifiedPositions
+    GROUP BY asset_class
+    ORDER BY market_value DESC
+    """
+    return await _run_query(query, params)
+
+
+# ======================================================================
+# 7. RA Fund Holdings / Private Assets
 # ======================================================================
 
 async def get_ra_fund_holdings(report_date: str) -> list[dict[str, Any]]:

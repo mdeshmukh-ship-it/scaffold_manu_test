@@ -134,8 +134,20 @@ async def _run_query(query: str, params: list[Any] | None = None) -> list[dict[s
 # ---------------------------------------------------------------------------
 
 
+_clients_cache: list[str] | None = None
+_clients_cache_ts: float = 0.0
+_CLIENTS_CACHE_TTL = 600  # 10 minutes
+
+
 async def get_all_clients() -> list[str]:
-    """Return distinct client family names from fidelity.accounts."""
+    """Return distinct client family names from fidelity.accounts (cached)."""
+    global _clients_cache, _clients_cache_ts
+    import time
+
+    now = time.time()
+    if _clients_cache is not None and (now - _clients_cache_ts) < _CLIENTS_CACHE_TTL:
+        return _clients_cache
+
     query = """
     SELECT DISTINCT ClientName
     FROM `perennial-data-prod.fidelity.accounts`
@@ -143,7 +155,9 @@ async def get_all_clients() -> list[str]:
     ORDER BY ClientName
     """
     rows = await _run_query(query)
-    return [row["ClientName"] for row in rows]
+    _clients_cache = [row["ClientName"] for row in rows]
+    _clients_cache_ts = now
+    return _clients_cache
 
 
 async def get_existing_targets(family_name: str) -> list[dict[str, Any]]:
