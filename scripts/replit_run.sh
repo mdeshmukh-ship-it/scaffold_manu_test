@@ -6,6 +6,7 @@ PID_DIR="$ROOT_DIR/.run/dev"
 cd "$ROOT_DIR"
 
 # Ensure uv is on PATH (installed to workspace/.local/bin on Replit)
+export HOME="${HOME:-/home/runner}"
 if [[ -d "$HOME/workspace/.local/bin" ]]; then
   export PATH="$HOME/workspace/.local/bin:$PATH"
 fi
