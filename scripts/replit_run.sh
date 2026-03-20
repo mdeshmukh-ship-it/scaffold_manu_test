@@ -28,8 +28,16 @@ export LLM_PROVIDER="${LLM_PROVIDER:-none}"
 export LLM_MODEL="${LLM_MODEL:-Qwen/Qwen3.5-2B}"
 export LLM_LOCAL_BASE_URL="${LLM_LOCAL_BASE_URL:-http://127.0.0.1:8002}"
 
-if command -v corepack >/dev/null 2>&1; then
-  corepack enable >/dev/null 2>&1 || true
+# Ensure yarn is available
+if ! command -v yarn >/dev/null 2>&1; then
+  echo "Installing yarn..."
+  npm install -g yarn >/dev/null 2>&1
+fi
+
+# Install web dependencies if needed
+if [[ ! -d "$ROOT_DIR/apps/web/node_modules" ]]; then
+  echo "Installing web dependencies..."
+  (cd "$ROOT_DIR/apps/web" && yarn install)
 fi
 
 LLM_PID=""
