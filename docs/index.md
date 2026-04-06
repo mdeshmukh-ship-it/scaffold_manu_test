@@ -28,6 +28,14 @@
 - [Claude Code](./agent/claude-code.md)
 - [Replit](./agent/replit.md)
 
+## Perennial Data Guides
+
+- **[Assistant Quick Reference](./perennial_assistant_quick_reference.md)** — Working queries with correct field names for activity, realized/unrealized gains, dividends/interest, and account-level performance metrics
+- [Business Context](./perennial_business_context.md) — Client hierarchy, account types, data sources, fund identification, date logic, asset classification
+- [ETL Workflows](./perennial_etl_workflows.md) — Liquid returns and private returns calculation pipelines, TWROR methodology, output tables
+- [Table Relationships & Query Patterns](./perennial_table_relationships_and_query_patterns.md) — Reporting views, source table joins, validated SQL patterns for all common operations
+- [Table Schema Reference](./perennial_table_schema_reference.md) — Complete column-level reference for all 101 tables across 12 datasets in BigQuery
+
 ## Reference
 
 - [Architecture Overview](./00-overview.md)

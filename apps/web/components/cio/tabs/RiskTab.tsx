@@ -15,7 +15,7 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts'
-import { Shield, TrendingDown, Activity, BarChart3 } from 'lucide-react'
+import { Shield, TrendingDown, Activity, BarChart3, FileText } from 'lucide-react'
 import {
   useCIORiskMetrics,
   useCIORollingMetrics,
@@ -143,6 +143,26 @@ export default function RiskTab({ reportDate, accounts }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Risk Analysis Summary */}
+      {metrics && (
+        <RiskAnalysis
+          volatility={metrics.volatility_pct}
+          maxDrawdown={metrics.max_drawdown_pct}
+          sharpe={metrics.sharpe_ratio}
+          sortino={metrics.sortino_ratio}
+          peakDate={metrics.max_dd_peak_date}
+          troughDate={metrics.max_dd_trough_date}
+          bestMonth={metrics.best_month}
+          bestMonthReturn={metrics.best_month_return_pct}
+          worstMonth={metrics.worst_month}
+          worstMonthReturn={metrics.worst_month_return_pct}
+          itdReturn={metrics.itd_return_pct}
+          periodReturns={periodReturnData}
+          periodVol={periodVolData}
+          rollingData={rollingData}
+        />
       )}
 
       {/* ROW 1: 365-Day Rolling Return & Volatility — SIDE BY SIDE */}
@@ -284,6 +304,235 @@ function RiskKPI({
         <span className="text-[11px] font-medium uppercase text-secondary-foreground">{label}</span>
       </div>
       <div className={`mt-2 text-xl font-bold ${color}`}>{value}</div>
+    </div>
+  )
+}
+
+function RiskAnalysis({
+  volatility,
+  maxDrawdown,
+  sharpe,
+  sortino,
+  peakDate,
+  troughDate,
+  bestMonth,
+  bestMonthReturn,
+  worstMonth,
+  worstMonthReturn,
+  itdReturn,
+  periodReturns,
+  periodVol,
+  rollingData,
+}: {
+  volatility: number
+  maxDrawdown: number
+  sharpe: number
+  sortino: number
+  peakDate: string
+  troughDate: string
+  bestMonth: string
+  bestMonthReturn: number
+  worstMonth: string
+  worstMonthReturn: number
+  itdReturn: number
+  periodReturns: { period: string; value: number }[]
+  periodVol: { period: string; value: number }[]
+  rollingData: { date: string; return_365d: number; vol_365d: number }[]
+}) {
+  // ── Derived metrics ──────────────────────────────────────────────
+  const pQtd = periodReturns.find((p) => p.period === 'QTD')?.value
+  const pYtd = periodReturns.find((p) => p.period === 'YTD')?.value
+  const p1y  = periodReturns.find((p) => p.period === '1Y')?.value
+  const pItd = periodReturns.find((p) => p.period === 'ITD')?.value
+
+  const pvQtd = periodVol.find((p) => p.period === 'QTD')?.value
+  const pvYtd = periodVol.find((p) => p.period === 'YTD')?.value
+  const pv1y  = periodVol.find((p) => p.period === '1Y')?.value
+  const pvItd = periodVol.find((p) => p.period === 'ITD')?.value
+
+  const recentRolling = rollingData.length > 0 ? rollingData[rollingData.length - 1] : null
+  const peakRollingVol = rollingData.length > 0 ? Math.max(...rollingData.map((d) => d.vol_365d)) : 0
+  const troughRollingVol = rollingData.length > 0 ? Math.min(...rollingData.map((d) => d.vol_365d)) : 0
+  const peakRollingReturn = rollingData.length > 0 ? Math.max(...rollingData.map((d) => d.return_365d)) : 0
+  const recentVol = recentRolling?.vol_365d ?? 0
+  const recentReturn = recentRolling?.return_365d ?? 0
+
+  // Tail-risk asymmetry: Sortino >> Sharpe means downside is tighter than upside
+  const tailAsymmetry = sharpe > 0 ? sortino / sharpe : 0
+
+  // Monthly return dispersion
+  const monthlySpread = bestMonthReturn - worstMonthReturn
+
+  // Drawdown severity relative to vol (>2× vol is outsized)
+  const ddToVol = volatility > 0 ? maxDrawdown / volatility : 0
+
+  // Drawdown duration in months (approximate)
+  const ddStart = new Date(peakDate)
+  const ddEnd = new Date(troughDate)
+  const ddMonths = Math.max(1, Math.round((ddEnd.getTime() - ddStart.getTime()) / (30.44 * 24 * 60 * 60 * 1000)))
+
+  // Vol regime: is current vol in the bottom or top quartile of its rolling range?
+  const volRange = peakRollingVol - troughRollingVol
+  const volPercentile = volRange > 0 ? (recentVol - troughRollingVol) / volRange : 0.5
+
+  // ── Commentary ───────────────────────────────────────────────────
+  const bullets: { color: string; title: string; body: string }[] = []
+
+  // 1 ─ Volatility
+  {
+    const label = volatility > 25 ? 'Elevated' : volatility > 15 ? 'Moderate' : volatility > 8 ? 'Low' : 'Very low'
+    let body = ''
+    if (volatility <= 8) {
+      body = `At ${volatility.toFixed(1)}% annualized, the portfolio exhibits minimal daily variation, consistent with a conservative, bond- or cash-heavy allocation.`
+    } else if (volatility <= 15) {
+      body = `At ${volatility.toFixed(1)}% annualized, the portfolio sits within a normal range for a diversified, balanced allocation — risk is well-contained relative to typical multi-asset portfolios.`
+    } else if (volatility <= 25) {
+      body = `At ${volatility.toFixed(1)}% annualized, the portfolio carries risk in line with an equity-tilted allocation. This level is typical for growth-oriented portfolios and suggests moderate concentration.`
+    } else {
+      body = `At ${volatility.toFixed(1)}% annualized, the portfolio runs above-average risk, likely reflecting concentrated positions, illiquid private holdings, or a smaller number of high-conviction bets.`
+    }
+    // Vol regime trend
+    if (pvQtd != null && pvItd != null && pvItd > 0) {
+      const ratio = pvQtd / pvItd
+      if (ratio < 0.6) {
+        body += ` Notably, QTD vol (${pvQtd.toFixed(1)}%) is running well below the ITD average (${pvItd.toFixed(1)}%), pointing to a quieter risk regime — the portfolio has de-risked or markets have compressed.`
+      } else if (ratio > 1.4) {
+        body += ` QTD vol (${pvQtd.toFixed(1)}%) has expanded meaningfully above the ITD average (${pvItd.toFixed(1)}%), signaling an uptick in near-term risk — worth monitoring whether this is transient or structural.`
+      } else {
+        body += ` QTD vol (${pvQtd.toFixed(1)}%) is tracking near its ITD average (${pvItd.toFixed(1)}%), suggesting a stable risk profile.`
+      }
+    }
+    bullets.push({ color: 'text-orange-400', title: `${label} volatility`, body })
+  }
+
+  // 2 ─ Risk-adjusted returns (Sharpe vs Sortino)
+  {
+    let body = `Sharpe of ${sharpe.toFixed(2)} and Sortino of ${sortino.toFixed(2)}`
+    if (sharpe >= 1.0) {
+      body += ' — the portfolio is earning a meaningful premium per unit of risk taken.'
+    } else if (sharpe >= 0.5) {
+      body += ' — adequate compensation for risk, though room exists to improve efficiency.'
+    } else if (sharpe >= 0) {
+      body += ' — the portfolio is generating positive but thin risk-adjusted returns; the risk budget may not be optimally deployed.'
+    } else {
+      body += ' — negative risk-adjusted returns indicate the portfolio is destroying value relative to a risk-free alternative.'
+    }
+    // Tail asymmetry insight
+    if (tailAsymmetry > 1.5 && sharpe > 0) {
+      body += ` The Sortino significantly exceeds the Sharpe (${tailAsymmetry.toFixed(1)}× ratio), which is a positive signal: downside deviation is well-contained relative to overall vol — the portfolio captures more upside than downside.`
+    } else if (tailAsymmetry < 0.8 && tailAsymmetry > 0) {
+      body += ` The Sortino trailing the Sharpe (${tailAsymmetry.toFixed(1)}× ratio) is a caution flag — downside moves are proportionally larger than upside, suggesting negatively skewed returns.`
+    }
+    bullets.push({
+      color: 'text-teal-400',
+      title: sharpe >= 1 ? 'Strong risk-adjusted returns' : sharpe >= 0.5 ? 'Adequate risk-adjusted returns' : sharpe >= 0 ? 'Thin risk-adjusted returns' : 'Negative risk-adjusted returns',
+      body,
+    })
+  }
+
+  // 3 ─ Drawdown
+  {
+    const ddLabel = maxDrawdown > 20 ? 'Deep' : maxDrawdown > 10 ? 'Moderate' : maxDrawdown > 3 ? 'Contained' : 'Minimal'
+    let body = `The largest peak-to-trough decline was -${maxDrawdown.toFixed(1)}%, occurring over ~${ddMonths} month${ddMonths > 1 ? 's' : ''} (${peakDate.slice(0, 10)} → ${troughDate.slice(0, 10)}).`
+    if (ddToVol > 2.5) {
+      body += ` At ${ddToVol.toFixed(1)}× the annualized vol, this drawdown was outsized relative to the portfolio's normal risk profile — suggesting a tail event or a correlated sell-off rather than typical market noise.`
+    } else if (ddToVol > 1.5) {
+      body += ` At ${ddToVol.toFixed(1)}× the annualized vol, the drawdown was proportionate to the risk being taken — painful but within the expected range for this volatility level.`
+    } else {
+      body += ` At ${ddToVol.toFixed(1)}× the annualized vol, the drawdown was shallow relative to risk, reflecting good downside protection.`
+    }
+    bullets.push({ color: 'text-red-400', title: `${ddLabel} drawdown (-${maxDrawdown.toFixed(1)}%)`, body })
+  }
+
+  // 4 ─ Monthly return dispersion
+  {
+    let body = `Best month: ${bestMonth} (${bestMonthReturn >= 0 ? '+' : ''}${bestMonthReturn.toFixed(2)}%). Worst month: ${worstMonth} (${worstMonthReturn.toFixed(2)}%).`
+    body += ` The ${monthlySpread.toFixed(1)}pp spread between the best and worst months`
+    if (monthlySpread > 20) {
+      body += ' reveals fat tails in the return distribution — a small number of extreme months are driving a disproportionate share of outcomes. Position sizing and rebalancing discipline are critical in this regime.'
+    } else if (monthlySpread > 10) {
+      body += ' indicates meaningful dispersion. Returns are not smooth, and the portfolio experiences occasional outsized swings in both directions.'
+    } else if (monthlySpread > 4) {
+      body += ' is within a normal range for a diversified portfolio. Monthly outcomes are reasonably clustered around the mean.'
+    } else {
+      body += ' is tight, consistent with low-volatility, steady-return characteristics.'
+    }
+    bullets.push({ color: 'text-purple-400', title: 'Return dispersion', body })
+  }
+
+  // 5 ─ Rolling regime analysis
+  if (rollingData.length > 0) {
+    let body = ''
+    const volCompression = peakRollingVol > 0 ? (1 - recentVol / peakRollingVol) * 100 : 0
+    const returnFromPeak = peakRollingReturn > 0 ? (recentReturn / peakRollingReturn) * 100 : 0
+
+    if (volCompression > 50) {
+      body = `Rolling 365-day vol has compressed ${volCompression.toFixed(0)}% from its peak (${peakRollingVol.toFixed(0)}% → ${recentVol.toFixed(0)}%), confirming a decisive regime shift toward lower risk.`
+      if (recentReturn > 0) {
+        body += ` Meanwhile, the trailing return remains positive at ${recentReturn.toFixed(0)}% — the portfolio is generating returns in a calmer environment, which is the ideal setup.`
+      } else {
+        body += ` However, trailing returns have turned negative (${recentReturn.toFixed(0)}%), suggesting the low-vol regime may also be a low-return one — the portfolio may benefit from selectively adding risk.`
+      }
+    } else if (volPercentile > 0.75) {
+      body = `Rolling vol is in the upper quartile of its historical range (${recentVol.toFixed(0)}% vs. peak ${peakRollingVol.toFixed(0)}%), indicating a heightened risk environment. `
+      body += recentReturn > 0
+        ? `The portfolio is still generating positive trailing returns (${recentReturn.toFixed(0)}%), but the elevated vol warrants vigilance.`
+        : `With trailing returns at ${recentReturn.toFixed(0)}%, the risk-reward has deteriorated — consider whether the current positioning is appropriate.`
+    } else {
+      body = `Rolling vol (${recentVol.toFixed(0)}%) and return (${recentReturn.toFixed(0)}%) are both within their mid-range — no extreme regime signals. The portfolio is operating in a steady-state environment.`
+    }
+    bullets.push({ color: 'text-emerald-400', title: 'Rolling regime analysis', body })
+  }
+
+  // 6 ─ Period return vs volatility synthesis
+  if (periodReturns.length > 0 && periodVol.length > 0) {
+    let body = ''
+    // Compute information ratios across periods
+    const periods = ['QTD', 'YTD', '1Y', 'ITD'] as const
+    const periodPairs = periods
+      .map((p) => {
+        const ret = periodReturns.find((r) => r.period === p)?.value
+        const vol = periodVol.find((v) => v.period === p)?.value
+        return ret != null && vol != null && vol > 0 ? { period: p, ret, vol, ratio: ret / vol } : null
+      })
+      .filter(Boolean) as { period: string; ret: number; vol: number; ratio: number }[]
+
+    if (periodPairs.length >= 2) {
+      const shortTerm = periodPairs.find((p) => p.period === 'QTD') || periodPairs[0]
+      const longTerm = periodPairs.find((p) => p.period === 'ITD') || periodPairs[periodPairs.length - 1]
+
+      const improving = shortTerm.ratio > longTerm.ratio
+      body = `Return-per-unit-risk across periods: ${periodPairs.map((p) => `${p.period} ${p.ratio.toFixed(2)}`).join(', ')}.`
+      if (improving) {
+        body += ` The improving short-term ratio (${shortTerm.period}: ${shortTerm.ratio.toFixed(2)} vs. ${longTerm.period}: ${longTerm.ratio.toFixed(2)}) suggests the portfolio's risk efficiency is trending in the right direction — recent performance is delivering more return per unit of risk.`
+      } else if (shortTerm.ratio < 0 && longTerm.ratio > 0) {
+        body += ` Short-term risk efficiency has turned negative (${shortTerm.period}: ${shortTerm.ratio.toFixed(2)}) while long-term remains positive (${longTerm.period}: ${longTerm.ratio.toFixed(2)}). This divergence is worth watching — if it persists, the risk budget may need reallocation.`
+      } else {
+        body += ` Risk efficiency has declined from ${longTerm.period} (${longTerm.ratio.toFixed(2)}) to ${shortTerm.period} (${shortTerm.ratio.toFixed(2)}). The portfolio is absorbing more vol per unit of return in the near term.`
+      }
+    }
+    if (body) {
+      bullets.push({ color: 'text-blue-400', title: 'Risk efficiency across periods', body })
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary-foreground">
+        <FileText className="size-4 text-teal-400" />
+        Risk Analysis
+      </h3>
+      <ul className="space-y-2.5 text-sm leading-relaxed text-secondary-foreground">
+        {bullets.map((b, i) => (
+          <li key={i} className="flex gap-2">
+            <span className={`mt-1 ${b.color}`}>•</span>
+            <span>
+              <strong className="text-primary-foreground">{b.title}</strong>
+              {' — '}{b.body}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

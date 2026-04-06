@@ -131,6 +131,24 @@ Before marking a task complete, all of these must pass:
 - Prefer one obvious pattern over flexible abstractions. Keep the default app small and readable.
 - Prefer `@/*` imports, clear names, browser APIs, and no premature memoization.
 
+## Perennial Data Reference
+
+When working on portfolio data, returns, holdings, or client reporting features, consult these guides in `docs/`:
+
+- **`docs/perennial_assistant_quick_reference.md`** — START HERE. Working queries with correct field names for daily account activity, realized/unrealized gains by account type, dividend/interest data, and account-level performance metrics. Includes key gotchas (field casing, typos, deduplication, PIMCO UNION pattern).
+- `docs/perennial_business_context.md` — Client hierarchy (Family → Entity → Account), account type classification, data sources, Perennial funds (VC/DI/RA), investment earnings formula, date logic, asset classification rules.
+- `docs/perennial_etl_workflows.md` — Liquid returns ETL (daily TWROR for Fidelity SMA accounts) and private returns ETL (TWROR for VC fund entities from SS&C data). Covers inputs, calculation pipeline, output tables, and edge cases.
+- `docs/perennial_table_relationships_and_query_patterns.md` — Pre-computed reporting views (recommended for client reports), source table relationship map, validated SQL query patterns for all common operations (market values, returns, holdings, asset allocation, fund summaries, benchmarks).
+- `docs/perennial_table_schema_reference.md` — Complete column-level reference for all 101 tables across 12 datasets in `perennial-data-prod` BigQuery.
+
+Always prefer the `reporting.*` views for client-facing queries. Use source tables only for ad-hoc analysis or custom calculations not covered by reporting views.
+
+### Key Data Access Rules
+- **Activity data:** Use `reporting.daily_account_activity` (snake_case fields: `deposits`, `withdrawals`, `dividends`, `interest`, `fees`, `option_premium`, `net_flows`).
+- **Realized/unrealized gains:** Use `parametric.portfolio_data` for Equity accounts, `quantinno.account_summary` for Long-Short accounts, or `reporting.account_type_summaries` for unified key-value access.
+- **Performance metrics:** Use `reporting.account_returns` for account-level TWROR, `reporting.entity_returns` for entity-level, `reporting.family_returns` for family-level. For tax alpha, join `parametric.portfolio_performance`.
+- **Dividends & interest:** Use `reporting.daily_account_activity` (daily) or `reporting.account_monthly_activity` (monthly rollup).
+
 ## Mistake Log
 
 If an agent makes a serious mistake, add a short entry:

@@ -7,13 +7,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   Cell,
-  LineChart,
-  Line,
 } from 'recharts'
 import { GitBranch } from 'lucide-react'
-import { useCIOTwror, useCIOMonthlyReturns, useCIOMarketValues } from '@/hooks/useCIOData'
+import { useCIOTwror, useCIOMarketValues } from '@/hooks/useCIOData'
 import { Spinner } from '@/components/generic/Spinner'
 
 type Props = {
@@ -22,9 +19,8 @@ type Props = {
 }
 
 const COLORS = {
-  allocation: '#1B4D3E',
-  selection: '#E07830',
-  interaction: '#3A7D7B',
+  selection: '#4682B4',
+  concentration: '#E07830',
   positive: '#3fa97c',
   negative: '#c44a4a',
   grid: 'rgba(255,255,255,0.06)',
@@ -47,17 +43,15 @@ const BENCHMARKS = [
 
 export default function AttributionTab({ reportDate, accounts }: Props) {
   const { data: twrorData, loading: tLoading, fetch: fetchTwror } = useCIOTwror(accounts)
-  const { data: monthlyData, loading: mLoading, fetch: fetchMonthly } = useCIOMonthlyReturns(reportDate, accounts)
   const { data: mvData, loading: mvLoading, fetch: fetchMV } = useCIOMarketValues(reportDate, accounts)
   const [benchmark, setBenchmark] = useState('none')
 
   useEffect(() => {
     void fetchTwror()
-    void fetchMonthly()
     void fetchMV()
-  }, [fetchTwror, fetchMonthly, fetchMV])
+  }, [fetchTwror, fetchMV])
 
-  const loading = tLoading || mLoading || mvLoading
+  const loading = tLoading || mvLoading
 
   // MV-weighted portfolio QTD return
   const portfolioReturn = useMemo(() => {
@@ -83,19 +77,122 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
 
   const activeReturn = portfolioReturn - benchmarkReturn
 
-  // Brinson attribution (simulated breakdown from active return)
+  // Per-account weights and returns (used for attribution decomposition)
+  const accountAttribution = useMemo(() => {
+    if (twrorData.length === 0 || !mvData) return []
+    const totalMV = mvData.total_mv || 1
+    return twrorData.map((row) => {
+      const mv = mvData.rows.find(
+        (m) => m.FBSIShortName === row.FBSIShortName || m.AccountNumber === row.account_number
+      )?.MarketValue ?? 0
+      return {
+        name: row.FBSIShortName || row.account_number,
+        weight: mv / totalMV,
+        ret: (row.qtd_twror ?? 0) * 100,
+        mv,
+      }
+    }).sort((a, b) => b.weight - a.weight)
+  }, [twrorData, mvData])
+
+  // Equal-weight portfolio return (needed for decomposition)
+  const equalWeightReturn = useMemo(() => {
+    if (accountAttribution.length === 0) return 0
+    return accountAttribution.reduce((s, a) => s + a.ret, 0) / accountAttribution.length
+  }, [accountAttribution])
+
+  // Attribution decomposition: Selection + Concentration = Active Return
+  //   Selection  = equal-weight avg return − benchmark return
+  //              → Did the selected accounts beat the benchmark on average?
+  //   Concentration = MV-weighted return − equal-weight return
+  //              → Did overweighting certain accounts help or hurt?
   const brinsonData = useMemo(() => {
-    if (benchmark === 'none' || twrorData.length === 0) return []
-    const alloc = activeReturn * 0.45
-    const select = activeReturn * 0.40
-    const inter = activeReturn * 0.15
+    if (benchmark === 'none' || accountAttribution.length === 0) return []
+
+    const selectionEffect = equalWeightReturn - benchmarkReturn
+    const concentrationEffect = portfolioReturn - equalWeightReturn
+
     return [
-      { name: 'Allocation', value: parseFloat(alloc.toFixed(2)) },
-      { name: 'Selection', value: parseFloat(select.toFixed(2)) },
-      { name: 'Interaction', value: parseFloat(inter.toFixed(2)) },
+      { name: 'Selection', value: parseFloat(selectionEffect.toFixed(2)) },
+      { name: 'Concentration', value: parseFloat(concentrationEffect.toFixed(2)) },
       { name: 'Total Active', value: parseFloat(activeReturn.toFixed(2)) },
     ]
-  }, [benchmark, twrorData, activeReturn])
+  }, [benchmark, accountAttribution, equalWeightReturn, benchmarkReturn, portfolioReturn, activeReturn])
+
+  // Per-account contribution to active return (for the summary)
+  const accountContribToActive = useMemo(() => {
+    if (accountAttribution.length === 0) return []
+    return accountAttribution.map((a) => ({
+      name: a.name,
+      weight: a.weight,
+      ret: a.ret,
+      contribution: a.weight * (a.ret - benchmarkReturn),
+    })).sort((a, b) => b.contribution - a.contribution)
+  }, [accountAttribution, benchmarkReturn])
+
+  // Brinson summary commentary — structured as bullet points
+  const brinsonBullets = useMemo(() => {
+    if (brinsonData.length === 0 || benchmark === 'none') return []
+    const selEffect = brinsonData.find((d) => d.name === 'Selection')?.value ?? 0
+    const concEffect = brinsonData.find((d) => d.name === 'Concentration')?.value ?? 0
+    const benchLabel = BENCHMARKS.find((b) => b.value === benchmark)?.label ?? benchmark
+
+    const bullets: { color: string; text: string }[] = []
+
+    // 1 — Active return headline
+    {
+      const sign = activeReturn >= 0 ? '+' : ''
+      bullets.push({
+        color: activeReturn >= 0 ? 'text-emerald-400' : 'text-red-400',
+        text: `The portfolio ${activeReturn >= 0 ? 'outperformed' : 'underperformed'} ${benchLabel} by ${sign}${activeReturn.toFixed(2)}% QTD. This active return decomposes into a Selection effect of ${selEffect >= 0 ? '+' : ''}${selEffect.toFixed(2)}% and a Concentration effect of ${concEffect >= 0 ? '+' : ''}${concEffect.toFixed(2)}%.`,
+      })
+    }
+
+    // 2 — Selection effect
+    {
+      let text = ''
+      if (selEffect > 0.1) {
+        text = `Selection added +${selEffect.toFixed(2)}% — the selected accounts returned ${equalWeightReturn.toFixed(2)}% on average (equal-weighted), outpacing the benchmark's ${benchmarkReturn.toFixed(2)}%. On a like-for-like basis, the portfolio's underlying holdings are generating alpha.`
+      } else if (selEffect < -0.1) {
+        text = `Selection detracted ${selEffect.toFixed(2)}% — the accounts averaged ${equalWeightReturn.toFixed(2)}% (equal-weighted) vs. the benchmark's ${benchmarkReturn.toFixed(2)}%. The portfolio's underlying investments are lagging the benchmark, regardless of how capital is allocated across them.`
+      } else {
+        text = `Selection was neutral (${selEffect >= 0 ? '+' : ''}${selEffect.toFixed(2)}%) — the average account return of ${equalWeightReturn.toFixed(2)}% roughly matched the benchmark (${benchmarkReturn.toFixed(2)}%). No meaningful alpha or drag from individual account performance.`
+      }
+      bullets.push({ color: 'text-blue-400', text })
+    }
+
+    // 3 — Concentration effect
+    {
+      let text = ''
+      if (concEffect > 0.1) {
+        text = `Concentration added +${concEffect.toFixed(2)}% — the portfolio's MV-weighted return (${portfolioReturn.toFixed(2)}%) exceeded the equal-weight return (${equalWeightReturn.toFixed(2)}%), meaning capital was tilted toward the higher-returning accounts. The weighting decisions were value-additive.`
+      } else if (concEffect < -0.1) {
+        text = `Concentration detracted ${concEffect.toFixed(2)}% — the MV-weighted return (${portfolioReturn.toFixed(2)}%) undershot the equal-weight return (${equalWeightReturn.toFixed(2)}%). Larger accounts underperformed smaller ones, so the portfolio's natural size-weighting created a drag.`
+      } else {
+        text = `Concentration was neutral (${concEffect >= 0 ? '+' : ''}${concEffect.toFixed(2)}%) — the MV-weighted and equal-weight returns were close (${portfolioReturn.toFixed(2)}% vs. ${equalWeightReturn.toFixed(2)}%), indicating account size had minimal impact on outcomes.`
+      }
+      bullets.push({ color: 'text-orange-400', text })
+    }
+
+    // 4 — Top/bottom account contributors
+    if (accountContribToActive.length > 0) {
+      const top = accountContribToActive[0]
+      const bottom = accountContribToActive[accountContribToActive.length - 1]
+      let text = `Largest positive contributor: ${top.name} (${(top.weight * 100).toFixed(1)}% weight, ${top.ret.toFixed(2)}% return → ${top.contribution >= 0 ? '+' : ''}${top.contribution.toFixed(2)}% contribution).`
+      if (bottom.contribution < 0) {
+        text += ` Largest drag: ${bottom.name} (${(bottom.weight * 100).toFixed(1)}% weight, ${bottom.ret.toFixed(2)}% return → ${bottom.contribution.toFixed(2)}% contribution).`
+      }
+
+      // Concentration insight
+      const topN = accountContribToActive.slice(0, 3)
+      const topNTotal = topN.reduce((s, a) => s + a.contribution, 0)
+      if (accountContribToActive.length > 3) {
+        text += ` The top 3 accounts accounted for ${topNTotal >= 0 ? '+' : ''}${topNTotal.toFixed(2)}% of the ${activeReturn.toFixed(2)}% active return — ${Math.abs(topNTotal) > Math.abs(activeReturn) * 0.8 ? 'performance is highly concentrated in a few names.' : 'contribution is reasonably distributed.'}`
+      }
+      bullets.push({ color: 'text-purple-400', text })
+    }
+
+    return bullets
+  }, [brinsonData, benchmark, activeReturn, equalWeightReturn, benchmarkReturn, portfolioReturn, accountContribToActive])
 
   // Contribution to Return (per account, MV-weighted)
   const contributionData = useMemo(() => {
@@ -112,9 +209,21 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
         absolute: parseFloat(absContrib.toFixed(2)),
         weight: parseFloat((weight * 100).toFixed(1)),
         account_return: parseFloat(((row.qtd_twror ?? 0) * 100).toFixed(2)),
+        mv,
       }
     }).sort((a, b) => b.absolute - a.absolute)
   }, [twrorData, mvData])
+
+  // Accounts whose contribution bar is dwarfed by the largest contributor
+  const tinyAccounts = useMemo(() => {
+    if (contributionData.length < 2) return []
+    const maxContrib = Math.max(...contributionData.map((a) => Math.abs(a.absolute)))
+    if (maxContrib === 0) return []
+    return contributionData.filter((a) => {
+      const ratio = Math.abs(a.absolute) / maxContrib
+      return ratio < 0.15 // contribution is <15% the size of the largest bar
+    })
+  }, [contributionData])
 
   // Attribution Waterfall
   const waterfallData = useMemo(() => {
@@ -126,14 +235,27 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
     ]
   }, [benchmark, benchmarkReturn, portfolioReturn, brinsonData])
 
-  // Attribution Over Time (monthly portfolio returns)
-  const contributionTrend = useMemo(() => {
-    return monthlyData.map((m) => ({
-      month: m.month,
-      portfolio: m.return_pct,
-      cumulative: m.cumulative_pct,
-    }))
-  }, [monthlyData])
+  // Waterfall summary text
+  const waterfallSummary = useMemo(() => {
+    if (benchmark === 'none' || brinsonData.length === 0) return ''
+    const benchLabel = BENCHMARKS.find((b) => b.value === benchmark)?.label ?? benchmark
+    const selEffect = brinsonData.find((d) => d.name === 'Selection')?.value ?? 0
+    const concEffect = brinsonData.find((d) => d.name === 'Concentration')?.value ?? 0
+
+    const sign = (v: number) => v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2)
+
+    let text = `${benchLabel} returned ${sign(benchmarkReturn)}%.`
+    if (selEffect > 0.05) {
+      text += ` Account selection added ${sign(selEffect)}% — the portfolio's holdings outperformed the benchmark on average.`
+    } else if (selEffect < -0.05) {
+      text += ` Account selection detracted ${sign(selEffect)}% — holdings underperformed the benchmark on average.`
+    }
+    if (Math.abs(concEffect) > 0.05) {
+      text += ` Concentration ${concEffect > 0 ? 'added' : 'detracted'} ${sign(concEffect)}% from weighting.`
+    }
+    text += ` Net result: portfolio at ${sign(portfolioReturn)}%.`
+    return text
+  }, [benchmark, brinsonData, benchmarkReturn, portfolioReturn])
 
   if (loading) {
     return (
@@ -193,27 +315,38 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
             Brinson Attribution
           </h3>
           {brinsonData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={brinsonData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: COLORS.axis }} />
-                <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(2)}%`} />
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={brinsonData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: COLORS.axis }} />
+                  <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(2)}%`} />
                 <Bar dataKey="value" name="Attribution" radius={[4, 4, 0, 0]}>
                   {brinsonData.map((entry, i) => (
                     <Cell
                       key={i}
                       fill={
-                        entry.name === 'Allocation' ? COLORS.allocation
-                        : entry.name === 'Selection' ? COLORS.selection
-                        : entry.name === 'Interaction' ? COLORS.interaction
+                        entry.name === 'Selection' ? COLORS.selection
+                        : entry.name === 'Concentration' ? COLORS.concentration
                         : entry.value >= 0 ? COLORS.positive : COLORS.negative
                       }
                     />
                   ))}
                 </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </BarChart>
+              </ResponsiveContainer>
+              {brinsonBullets.length > 0 && (
+                <ul className="mt-4 space-y-2 border-t border-neutral-700 pt-3">
+                  {brinsonBullets.map((b, i) => (
+                    <li key={i} className="flex gap-2 text-xs leading-relaxed text-secondary-foreground">
+                      <span className={`mt-0.5 ${b.color}`}>•</span>
+                      <span>{b.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           ) : (
             <div className="flex h-[300px] items-center justify-center text-sm text-secondary-foreground">
               Select a benchmark to view attribution
@@ -227,25 +360,33 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
             Account Contribution to QTD Return
           </h3>
           {contributionData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={contributionData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: COLORS.axis }} angle={-30} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(v: number, name: string) => [
-                    `${v.toFixed(2)}%`,
-                    name === 'absolute' ? 'Contribution' : name,
-                  ]}
-                />
-                <Bar dataKey="absolute" name="Contribution" radius={[3, 3, 0, 0]}>
-                  {contributionData.map((entry, i) => (
-                    <Cell key={i} fill={entry.absolute >= 0 ? COLORS.positive : COLORS.negative} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={contributionData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: COLORS.axis }} angle={-30} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v: number, name: string) => [
+                      `${v.toFixed(2)}%`,
+                      name === 'absolute' ? 'Contribution' : name,
+                    ]}
+                  />
+                  <Bar dataKey="absolute" name="Contribution" radius={[3, 3, 0, 0]}>
+                    {contributionData.map((entry, i) => (
+                      <Cell key={i} fill={entry.absolute >= 0 ? COLORS.positive : COLORS.negative} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {tinyAccounts.length > 0 && (
+                <p className="mt-2 text-[10px] text-secondary-foreground/70">
+                  <span className="text-amber-500">*</span> {tinyAccounts.map((a) => a.name).join(', ')}
+                  {tinyAccounts.length === 1 ? ' has' : ' have'} negligible contribution ({tinyAccounts.map((a) => `${a.name}: ${a.weight}% weight, ${a.account_return}% return`).join('; ')}) — bar may not be visible on the chart.
+                </p>
+              )}
+            </>
           ) : (
             <div className="flex h-[300px] items-center justify-center text-sm text-secondary-foreground">
               No data available
@@ -280,32 +421,14 @@ export default function AttributionTab({ reportDate, accounts }: Props) {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          {waterfallSummary && (
+            <p className="mt-3 text-xs leading-relaxed text-secondary-foreground">
+              {waterfallSummary}
+            </p>
+          )}
         </div>
       )}
 
-      {/* Monthly Returns Over Time */}
-      <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
-        <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
-          Monthly Portfolio Returns (Transfer-Adjusted)
-        </h3>
-        {contributionTrend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={contributionTrend} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: COLORS.axis }} angle={-45} textAnchor="end" height={50} />
-              <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(2)}%`} />
-              <Legend wrapperStyle={{ fontSize: '11px', color: '#9ea3ad' }} />
-              <Line type="monotone" dataKey="portfolio" name="Monthly Return" stroke="#1B4D3E" strokeWidth={2} dot={{ r: 3, fill: '#1B4D3E' }} />
-              <Line type="monotone" dataKey="cumulative" name="Cumulative Return" stroke="#3A7D7B" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 2, fill: '#3A7D7B' }} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex h-[300px] items-center justify-center text-sm text-secondary-foreground">
-            No monthly data available
-          </div>
-        )}
-      </div>
     </div>
   )
 }

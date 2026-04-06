@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   BarChart,
   Bar,
@@ -8,6 +8,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LineChart,
+  Line,
+  Legend,
 } from 'recharts'
 import { useCIOMonthlyReturns, useCIOTwror } from '@/hooks/useCIOData'
 import { Spinner } from '@/components/generic/Spinner'
@@ -35,7 +38,6 @@ const tooltipStyle = {
 export default function PerformanceTab({ reportDate, accounts }: Props) {
   const { data: monthlyData, loading: mLoading, fetch: fetchMonthly } = useCIOMonthlyReturns(reportDate, accounts)
   const { data: twrorData, loading: tLoading, fetch: fetchTwror } = useCIOTwror(accounts)
-  const [waterfallFund, setWaterfallFund] = useState('Total Portfolio')
 
   useEffect(() => {
     void fetchMonthly()
@@ -54,6 +56,15 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
     '5y': parseFloat(((row.five_year_twror ?? 0) * 100).toFixed(2)),
     itd: parseFloat(((row.inception_twror ?? 0) * 100).toFixed(2)),
   }))
+
+  // Monthly returns trend (for the line chart)
+  const monthlyTrend = useMemo(() => {
+    return monthlyData.map((m) => ({
+      month: m.month,
+      portfolio: m.return_pct,
+      cumulative: m.cumulative_pct,
+    }))
+  }, [monthlyData])
 
   return (
     <div className="flex flex-col gap-6">
@@ -107,25 +118,11 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
         )}
       </div>
 
-      {/* Waterfall Chart */}
+      {/* QTD Returns Chart */}
       <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-primary-foreground">
-            QTD Return Waterfall
-          </h3>
-          <select
-            value={waterfallFund}
-            onChange={(e) => setWaterfallFund(e.target.value)}
-            className="rounded-md border border-neutral-700 bg-neutral-850 px-3 py-1.5 text-xs text-primary-foreground outline-none"
-          >
-            <option value="Total Portfolio">Total Portfolio</option>
-            {twrorData.map((r) => (
-              <option key={r.account_number} value={r.FBSIShortName || r.account_number}>
-                {r.FBSIShortName || r.account_number}
-              </option>
-            ))}
-          </select>
-        </div>
+        <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
+          QTD Returns
+        </h3>
         {waterfallData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -162,47 +159,30 @@ export default function PerformanceTab({ reportDate, accounts }: Props) {
         )}
       </div>
 
-      {/* Monthly Returns Bar Chart */}
+      {/* Monthly Portfolio Returns (Transfer-Adjusted) */}
       <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
         <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
-          Monthly Returns (Transfer-Adjusted)
+          Monthly Portfolio Returns (Transfer-Adjusted)
         </h3>
         {mLoading ? (
           <div className="flex items-center justify-center py-10">
             <Spinner className="text-emerald-400" />
           </div>
-        ) : monthlyData.length > 0 ? (
+        ) : monthlyTrend.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+            <LineChart data={monthlyTrend} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 10, fill: COLORS.axis }}
-                angle={-45}
-                textAnchor="end"
-                height={50}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: COLORS.axis }}
-                tickFormatter={(v) => `${v}%`}
-              />
-              <Tooltip
-                formatter={(v: number) => `${v.toFixed(2)}%`}
-                contentStyle={tooltipStyle}
-              />
-              <Bar dataKey="return_pct" name="Monthly Return" radius={[3, 3, 0, 0]}>
-                {monthlyData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={entry.return_pct >= 0 ? COLORS.positive : COLORS.negative}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: COLORS.axis }} angle={-45} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11, fill: COLORS.axis }} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(2)}%`} />
+              <Legend wrapperStyle={{ fontSize: '11px', color: '#9ea3ad' }} />
+              <Line type="monotone" dataKey="portfolio" name="Monthly Return" stroke="#1B4D3E" strokeWidth={2} dot={{ r: 3, fill: '#1B4D3E' }} />
+              <Line type="monotone" dataKey="cumulative" name="Cumulative Return" stroke="#3A7D7B" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 2, fill: '#3A7D7B' }} />
+            </LineChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex h-[300px] items-center justify-center text-sm text-secondary-foreground">
-            No data available
+            No monthly data available
           </div>
         )}
       </div>
