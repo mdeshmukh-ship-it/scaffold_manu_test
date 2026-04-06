@@ -69,8 +69,8 @@ class AppSettings(BaseSettings):
     llm_local_timeout_seconds: float = 600.0
     openai_api_key: str = ""
     anthropic_api_key: str = ""
-    llm_timeout_seconds: float = 20.0
-    llm_max_retries: int = 2
+    llm_timeout_seconds: float = 60.0
+    llm_max_retries: int = 0
     scheduler_shared_token: str = ""
 
     # Slack integration for drift alerts

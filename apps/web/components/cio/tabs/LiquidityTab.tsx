@@ -9,11 +9,14 @@ import {
   ResponsiveContainer,
   Legend,
   Cell,
+  ReferenceLine,
 } from 'recharts'
 import { Droplets } from 'lucide-react'
 import {
   useCIORaFundHoldings,
   useCIOCapitalCallsTimeline,
+  useCIOAssetClass,
+  useCIOMarketValues,
   type RaFundHolding,
   type CapitalCallRow,
 } from '@/hooks/useCIOData'
@@ -22,6 +25,7 @@ import { Spinner } from '@/components/generic/Spinner'
 type Props = {
   reportDate: string
   accounts: string[]
+  clientName: string
 }
 
 const FUND_COLORS: Record<string, string> = {
@@ -29,6 +33,18 @@ const FUND_COLORS: Record<string, string> = {
   VC: '#e67e22',
   DI: '#2ecc71',
   Other: '#9b59b6',
+}
+
+// Distinct colors for calls (blue/green tones) vs distributions (red/warm tones)
+const CALL_COLORS: Record<string, string> = {
+  VC: '#3498db',
+  DI: '#2ecc71',
+  RA: '#1abc9c',
+}
+const DIST_COLORS: Record<string, string> = {
+  VC: '#e74c3c',
+  DI: '#e67e22',
+  RA: '#f39c12',
 }
 
 const tooltipStyle = {
@@ -56,16 +72,20 @@ function classifyFundType(fundName: string): string {
   return 'Other'
 }
 
-export default function LiquidityTab({ reportDate }: Props) {
-  const { data: raHoldings, loading: raLoading, fetch: fetchRa } = useCIORaFundHoldings(reportDate)
-  const { data: capitalCalls, loading: ccLoading, fetch: fetchCC } = useCIOCapitalCallsTimeline(reportDate)
+export default function LiquidityTab({ reportDate, accounts, clientName }: Props) {
+  const { data: raHoldings, loading: raLoading, fetch: fetchRa } = useCIORaFundHoldings(reportDate, clientName)
+  const { data: capitalCalls, loading: ccLoading, fetch: fetchCC } = useCIOCapitalCallsTimeline(reportDate, clientName)
+  const { data: assetClassData, loading: acLoading, fetch: fetchAC } = useCIOAssetClass(reportDate, accounts)
+  const { data: mvData, loading: mvLoading, fetch: fetchMV } = useCIOMarketValues(reportDate, accounts)
 
   useEffect(() => {
     void fetchRa()
     void fetchCC()
-  }, [fetchRa, fetchCC])
+    void fetchAC()
+    void fetchMV()
+  }, [fetchRa, fetchCC, fetchAC, fetchMV])
 
-  const loading = raLoading || ccLoading
+  const loading = raLoading || ccLoading || acLoading || mvLoading
 
   // Group holdings by fund for table
   const holdingsByFund = useMemo(() => {
@@ -99,40 +119,81 @@ export default function LiquidityTab({ reportDate }: Props) {
     }))
   }, [holdingsByFund])
 
-  // Capital calls & distributions by fund and month
-  const callsByFundAndMonth = useMemo(() => {
-    if (capitalCalls.length === 0) return []
-    // Group by month, split by fund type
+  // Capital calls & distributions by fund type and month (calls positive, distributions negative)
+  const callsTimeline = useMemo(() => {
+    if (capitalCalls.length === 0) return { data: [] as Record<string, any>[], callKeys: [] as string[], distKeys: [] as string[] }
+    const fundTypes = new Set<string>()
     const byMonth: Record<string, Record<string, { calls: number; dist: number }>> = {}
     for (const row of capitalCalls) {
-      const month = row.month
-      const fundType = classifyFundType(row.fund_name)
-      if (!byMonth[month]) byMonth[month] = {}
-      if (!byMonth[month][fundType]) byMonth[month][fundType] = { calls: 0, dist: 0 }
-      byMonth[month][fundType].calls += row.capital_called
-      byMonth[month][fundType].dist += row.distributions
+      const ft = row.fund_name // already 'VC', 'DI', or 'RA' from the backend
+      fundTypes.add(ft)
+      if (!byMonth[row.month]) byMonth[row.month] = {}
+      if (!byMonth[row.month][ft]) byMonth[row.month][ft] = { calls: 0, dist: 0 }
+      byMonth[row.month][ft].calls += row.capital_called
+      byMonth[row.month][ft].dist += row.distributions
     }
-    const fundTypes = [...new Set(capitalCalls.map((r) => classifyFundType(r.fund_name)))]
-    return Object.entries(byMonth)
+    const fts = [...fundTypes].sort()
+    const data = Object.entries(byMonth)
       .map(([month, funds]) => {
         const row: Record<string, any> = { month }
-        for (const ft of fundTypes) {
-          row[`${ft}_calls`] = Math.round(funds[ft]?.calls ?? 0)
-          row[`${ft}_dist`] = Math.round(funds[ft]?.dist ?? 0)
+        for (const ft of fts) {
+          row[`${ft} Calls`] = Math.round(funds[ft]?.calls ?? 0)
+          row[`${ft} Dist.`] = -Math.round(funds[ft]?.dist ?? 0) // negative below axis
         }
         return row
       })
       .sort((a, b) => (a.month as string).localeCompare(b.month as string))
-  }, [capitalCalls])
-
-  const fundTypes = useMemo(() => {
-    return [...new Set(capitalCalls.map((r) => classifyFundType(r.fund_name)))]
+    return {
+      data,
+      callKeys: fts.map((ft) => `${ft} Calls`),
+      distKeys: fts.filter((ft) => data.some((d) => d[`${ft} Dist.`] < 0)).map((ft) => `${ft} Dist.`),
+    }
   }, [capitalCalls])
 
   // Totals for explanation
   const totalValuation = holdingsByFund.reduce((s, h) => s + h.valuation, 0)
   const totalCalled = holdingsByFund.reduce((s, h) => s + h.called_capital, 0)
   const totalUnfunded = holdingsByFund.reduce((s, h) => s + h.unfunded, 0)
+
+  // Liquidity waterfall: classify by liquidity horizon
+  const liquidityWaterfall = useMemo(() => {
+    const buckets: { horizon: string; value: number; color: string }[] = []
+    // Liquid assets from asset class breakdown
+    const cashMV = assetClassData.find((a) => a.asset_class === 'Cash')?.market_value ?? 0
+    const equityMV = assetClassData.find((a) => a.asset_class === 'Equity')?.market_value ?? 0
+    const fimV = assetClassData.find((a) => a.asset_class === 'Fixed Income')?.market_value ?? 0
+    const otherLiquid = assetClassData
+      .filter((a) => !['Cash', 'Equity', 'Fixed Income', 'Venture Capital'].includes(a.asset_class))
+      .reduce((s, a) => s + a.market_value, 0)
+
+    // Private fund valuations by type
+    const vcVal = holdingsByFund.filter((h) => h.fund_type === 'VC').reduce((s, h) => s + h.valuation, 0)
+    const diVal = holdingsByFund.filter((h) => h.fund_type === 'DI').reduce((s, h) => s + h.valuation, 0)
+    const raVal = holdingsByFund.filter((h) => h.fund_type === 'RA').reduce((s, h) => s + h.valuation, 0)
+    const otherPrivate = holdingsByFund.filter((h) => h.fund_type === 'Other').reduce((s, h) => s + h.valuation, 0)
+
+    if (cashMV > 0) buckets.push({ horizon: '1 Day', value: cashMV, color: '#2ecc71' })
+    if (equityMV > 0) buckets.push({ horizon: '1 Week', value: equityMV, color: '#3498db' })
+    if (fimV > 0) buckets.push({ horizon: '1 Month', value: fimV, color: '#1abc9c' })
+    if (otherLiquid > 0) buckets.push({ horizon: '1 Month', value: otherLiquid, color: '#1abc9c' })
+    const quarterlyTotal = diVal
+    const yearlyTotal = vcVal + raVal + otherPrivate
+    if (quarterlyTotal > 0) buckets.push({ horizon: 'Quarterly', value: quarterlyTotal, color: '#e67e22' })
+    if (yearlyTotal > 0) buckets.push({ horizon: 'Yearly+', value: yearlyTotal, color: '#e74c3c' })
+
+    // Merge duplicate horizons (e.g., two "1 Month" entries)
+    const merged: Record<string, { value: number; color: string }> = {}
+    for (const b of buckets) {
+      if (merged[b.horizon]) {
+        merged[b.horizon].value += b.value
+      } else {
+        merged[b.horizon] = { value: b.value, color: b.color }
+      }
+    }
+    return Object.entries(merged).map(([horizon, data]) => ({ horizon, ...data }))
+  }, [assetClassData, holdingsByFund])
+
+  const totalPortfolioMV = (mvData?.total_mv ?? 0) + totalValuation
 
   if (loading) {
     return (
@@ -167,6 +228,35 @@ export default function LiquidityTab({ reportDate }: Props) {
           )}
         </p>
       </div>
+
+      {/* Liquidity Waterfall */}
+      {liquidityWaterfall.length > 0 && (
+        <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
+            Liquidity Waterfall
+          </h3>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={liquidityWaterfall} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+              <XAxis dataKey="horizon" tick={{ fontSize: 12, fill: AXIS }} />
+              <YAxis tick={{ fontSize: 11, fill: AXIS }} tickFormatter={(v) => formatCurrency(v)} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
+              <Bar dataKey="value" name="Market Value" radius={[4, 4, 0, 0]}>
+                {liquidityWaterfall.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="mt-2 text-[10px] leading-relaxed text-secondary-foreground/70">
+            Liquidity horizons: <span style={{ color: '#2ecc71' }}>1 Day</span> = cash & money market;{' '}
+            <span style={{ color: '#3498db' }}>1 Week</span> = public equities (T+2);{' '}
+            <span style={{ color: '#1abc9c' }}>1 Month</span> = fixed income & other liquid;{' '}
+            <span style={{ color: '#e67e22' }}>Quarterly</span> = DI funds;{' '}
+            <span style={{ color: '#e74c3c' }}>Yearly+</span> = VC, RA & other illiquid.
+          </p>
+        </div>
+      )}
 
       {/* Fund Holdings Table */}
       <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
@@ -220,18 +310,25 @@ export default function LiquidityTab({ reportDate }: Props) {
           Commitment Pacing by Fund Type
         </h3>
         {commitmentByType.length > 0 ? (
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={commitmentByType} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-              <XAxis dataKey="fund_type" tick={{ fontSize: 12, fill: AXIS }} />
-              <YAxis tick={{ fontSize: 11, fill: AXIS }} tickFormatter={(v) => formatCurrency(v)} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
-              <Legend wrapperStyle={{ fontSize: '11px', color: '#9ea3ad' }} />
-              <Bar dataKey="valuation" name="Current Valuation" fill="#2ecc71" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="called_capital" name="Called Capital" fill="#3498db" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="unfunded" name="Unfunded" fill="#e67e22" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <>
+            {/* Custom legend — guaranteed order */}
+            <div className="mb-2 flex items-center justify-center gap-5 text-[11px] text-secondary-foreground">
+              <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: '#2ecc71' }} /> Current Valuation</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: '#3498db' }} /> Called Capital</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: '#e67e22' }} /> Unfunded</span>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={commitmentByType} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                <XAxis dataKey="fund_type" tick={{ fontSize: 12, fill: AXIS }} />
+                <YAxis tick={{ fontSize: 11, fill: AXIS }} tickFormatter={(v) => formatCurrency(v)} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
+                <Bar dataKey="valuation" name="Current Valuation" fill="#2ecc71" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="called_capital" name="Called Capital" fill="#3498db" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="unfunded" name="Unfunded" fill="#e67e22" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </>
         ) : (
           <div className="flex h-[320px] items-center justify-center text-sm text-secondary-foreground">
             No commitment data
@@ -239,49 +336,65 @@ export default function LiquidityTab({ reportDate }: Props) {
         )}
       </div>
 
-      {/* Capital Calls & Distributions Timeline (by fund type) */}
+      {/* Capital Calls & Distributions Timeline */}
       <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
         <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
           Capital Calls & Distributions Timeline
         </h3>
         <p className="mb-3 text-xs text-secondary-foreground">
-          Actual capital calls and distributions pulled from BigQuery{' '}
-          <code className="rounded bg-neutral-700 px-1 py-0.5 text-[10px]">
-            private_asset_capital_calls
-          </code>{' '}
-          table, grouped by fund type and month. No forecasts — this is historical data only.
+          Full historical capital calls and distributions from SSC fund registers (VC, DI, RA).
+          Calls shown above the axis, distributions below.
         </p>
-        {callsByFundAndMonth.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={callsByFundAndMonth} margin={{ top: 10, right: 30, left: 20, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-              <XAxis dataKey="month" tick={{ fontSize: 9, fill: AXIS }} angle={-45} textAnchor="end" height={60} />
-              <YAxis tick={{ fontSize: 11, fill: AXIS }} tickFormatter={(v) => formatCurrency(v)} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
-              <Legend wrapperStyle={{ fontSize: '11px', color: '#9ea3ad' }} />
-              {fundTypes.map((ft) => (
-                <Bar
-                  key={`${ft}_calls`}
-                  dataKey={`${ft}_calls`}
-                  name={`${ft} Calls`}
-                  fill={FUND_COLORS[ft] ?? '#666'}
-                  radius={[2, 2, 0, 0]}
-                  stackId="calls"
+        {callsTimeline.data.length > 0 ? (
+          <>
+            {/* Custom legend */}
+            <div className="mb-2 flex flex-wrap items-center justify-center gap-4 text-[11px] text-secondary-foreground">
+              {callsTimeline.callKeys.map((k) => {
+                const ft = k.replace(' Calls', '')
+                return (
+                  <span key={k} className="flex items-center gap-1.5">
+                    <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: CALL_COLORS[ft] ?? '#666' }} />
+                    {k}
+                  </span>
+                )
+              })}
+              {callsTimeline.distKeys.map((k) => {
+                const ft = k.replace(' Dist.', '')
+                return (
+                  <span key={k} className="flex items-center gap-1.5">
+                    <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: DIST_COLORS[ft] ?? '#666' }} />
+                    {k}
+                  </span>
+                )
+              })}
+            </div>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={callsTimeline.data} margin={{ top: 10, right: 30, left: 20, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                <XAxis dataKey="month" tick={{ fontSize: 9, fill: AXIS }} angle={-45} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11, fill: AXIS }} tickFormatter={(v) => formatCurrency(Math.abs(v))} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(v: number, name: string) => [formatCurrency(Math.abs(v)), name]}
                 />
-              ))}
-              {fundTypes.map((ft) => (
-                <Bar
-                  key={`${ft}_dist`}
-                  dataKey={`${ft}_dist`}
-                  name={`${ft} Dist.`}
-                  fill={FUND_COLORS[ft] ?? '#666'}
-                  radius={[2, 2, 0, 0]}
-                  stackId="dist"
-                  opacity={0.5}
-                />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+                <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
+                {/* Calls stacked above axis */}
+                {callsTimeline.callKeys.map((k) => {
+                  const ft = k.replace(' Calls', '')
+                  return (
+                    <Bar key={k} dataKey={k} stackId="calls" fill={CALL_COLORS[ft] ?? '#666'} radius={[2, 2, 0, 0]} />
+                  )
+                })}
+                {/* Distributions stacked below axis */}
+                {callsTimeline.distKeys.map((k) => {
+                  const ft = k.replace(' Dist.', '')
+                  return (
+                    <Bar key={k} dataKey={k} stackId="dist" fill={DIST_COLORS[ft] ?? '#666'} radius={[0, 0, 2, 2]} />
+                  )
+                })}
+              </BarChart>
+            </ResponsiveContainer>
+          </>
         ) : (
           <div className="flex h-[350px] items-center justify-center text-sm text-secondary-foreground">
             No capital call/distribution history found
