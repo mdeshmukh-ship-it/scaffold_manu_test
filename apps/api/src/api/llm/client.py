@@ -24,19 +24,11 @@ class LLMProviderError(LLMError):
 
 
 @dataclass(frozen=True)
-class LLMImage:
-    """An image to include in the request (base64-encoded)."""
-    data: str  # base64-encoded image data
-    media_type: str = "image/png"  # image/png, image/jpeg, image/webp, image/gif
-
-
-@dataclass(frozen=True)
 class LLMRequest:
     system_prompt: str | None
     user_prompt: str
     temperature: float = 0.2
     max_output_tokens: int = 400
-    images: list[LLMImage] | None = None
 
 
 @dataclass(frozen=True)
@@ -127,22 +119,10 @@ async def _generate_openai_response(
     if not settings.openai_api_key:
         raise LLMConfigurationError("OPENAI_API_KEY is required when LLM_PROVIDER=openai.")
 
-    messages: list[dict[str, Any]] = []
+    messages: list[dict[str, str]] = []
     if request.system_prompt:
         messages.append({"role": "system", "content": request.system_prompt})
-
-    # Build user message with optional images (vision)
-    if request.images:
-        user_content: list[dict[str, Any]] = []
-        for img in request.images:
-            user_content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:{img.media_type};base64,{img.data}"},
-            })
-        user_content.append({"type": "text", "text": request.user_prompt})
-        messages.append({"role": "user", "content": user_content})
-    else:
-        messages.append({"role": "user", "content": request.user_prompt})
+    messages.append({"role": "user", "content": request.user_prompt})
 
     payload = {
         "model": model_name,
@@ -177,29 +157,12 @@ async def _generate_anthropic_response(
     if not settings.anthropic_api_key:
         raise LLMConfigurationError("ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic.")
 
-    # Build user message with optional images (vision)
-    if request.images:
-        user_content: list[dict[str, Any]] = []
-        for img in request.images:
-            user_content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": img.media_type,
-                    "data": img.data,
-                },
-            })
-        user_content.append({"type": "text", "text": request.user_prompt})
-        user_messages = [{"role": "user", "content": user_content}]
-    else:
-        user_messages = [{"role": "user", "content": request.user_prompt}]
-
     payload = {
         "model": model_name,
         "max_tokens": request.max_output_tokens,
         "temperature": request.temperature,
         "system": request.system_prompt or "",
-        "messages": user_messages,
+        "messages": [{"role": "user", "content": request.user_prompt}],
     }
     response = await _request_with_retries(
         provider_name="anthropic",

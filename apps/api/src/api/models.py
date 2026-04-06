@@ -181,24 +181,6 @@ class DriftSnapshot(Base):
     is_breach: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
-class BalanceSheetEntry(Base):
-    """Manual balance sheet entry for non-financial assets and liabilities."""
-
-    __tablename__ = "balance_sheet_entries"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    client_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    entry_type: Mapped[str] = mapped_column(String(30), nullable=False)  # asset | liability
-    category: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g. Real Estate, Art, Mortgage
-    description: Mapped[str] = mapped_column(String(500), nullable=False)
-    value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    as_of_date: Mapped[str] = mapped_column(String(10), nullable=False)  # YYYY-MM-DD
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_by: Mapped[str] = mapped_column(String(320), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
-
-
 class Alert(Base):
     """Record of a Slack notification sent for a family breach."""
 
