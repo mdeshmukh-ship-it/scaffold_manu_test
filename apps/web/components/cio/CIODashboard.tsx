@@ -15,6 +15,7 @@ import {
   Landmark,
   ChevronLeft,
   ChevronRight,
+  Globe,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -53,6 +54,7 @@ type TabDef = {
 }
 
 const STATIC_TABS: TabDef[] = [
+  { id: 'market-cipher', label: '🔓 Market Cipher', icon: Globe },
   { id: 'summary', label: 'Summary', icon: BarChart3 },
   { id: 'performance', label: 'Performance', icon: TrendingUp },
   { id: 'risk', label: 'Risk', icon: Shield },
@@ -115,7 +117,7 @@ function TabScrollBar({
   }
 
   return (
-    <div className="relative border-b border-neutral-750 bg-neutral-850/30">
+    <div className="relative z-30 border-b border-neutral-750 bg-neutral-850/30">
       {/* Left fade + arrow */}
       {canScrollLeft && (
         <button
@@ -151,9 +153,13 @@ function TabScrollBar({
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-3 text-xs font-medium transition-colors ${
-                isActive
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-secondary-foreground hover:border-neutral-600 hover:text-primary-foreground'
+                tab.id === 'market-cipher'
+                  ? isActive
+                    ? 'border-indigo-500 text-indigo-300 bg-indigo-950/30'
+                    : 'border-transparent text-indigo-400 hover:border-indigo-600 hover:text-indigo-300 hover:bg-indigo-950/20'
+                  : isActive
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-secondary-foreground hover:border-neutral-600 hover:text-primary-foreground'
               }`}
             >
               <Icon className="size-3.5" />
@@ -304,8 +310,8 @@ const CIODashboard = () => {
       </header>
 
       {/* Filters */}
-      <div className="border-b border-neutral-750 bg-neutral-850/50 px-6 py-3">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end gap-4">
+      <div className="relative z-40 border-b border-neutral-750 bg-neutral-850/50 px-6 py-3 overflow-visible">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end gap-4 overflow-visible">
           {/* Report Date */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-medium uppercase text-secondary-foreground">
@@ -397,7 +403,17 @@ const CIODashboard = () => {
       )}
 
       {/* Tab Content */}
-      <main className="flex-1 p-6">
+      {activeTab === 'market-cipher' && (
+        <div className="flex-1">
+          <iframe
+            src="/market-cipher/index.html"
+            title="Market Cipher — Global Economic Intelligence"
+            className="h-[calc(100vh-160px)] w-full border-0"
+            style={{ minHeight: '700px' }}
+          />
+        </div>
+      )}
+      <main className={`flex-1 p-6 ${activeTab === 'market-cipher' ? 'hidden' : ''}`}>
         <div className="mx-auto max-w-[1400px]">
           {activeTab === 'summary' && (
             <SummaryTab

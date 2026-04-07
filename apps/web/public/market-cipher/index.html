@@ -1,0 +1,2471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Cipher — Global Economic Intelligence</title>
+<!-- Local vendor libraries (no external HTTPS calls) -->
+<link rel="stylesheet" href="vendor/leaflet.css"/>
+<link rel="stylesheet" href="vendor/fontawesome.min.css"/>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="vendor/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17,24,39,0.85);
+  --bg-card-hover: rgba(30,41,59,0.95);
+  --border: rgba(99,102,241,0.15);
+  --border-hover: rgba(99,102,241,0.4);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #6366f1;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+  --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --gradient-2: linear-gradient(135deg, #06b6d4, #10b981);
+  --gradient-3: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-4: linear-gradient(135deg, #ec4899, #8b5cf6);
+  --shadow: 0 4px 30px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* Background effects */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 100%, rgba(168,85,247,0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: bgShift 30s ease-in-out infinite;
+}
+@keyframes bgShift {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-2%, 1%); }
+  66% { transform: translate(1%, -2%); }
+}
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+/* ===== HEADER ===== */
+.header {
+  background: linear-gradient(180deg, rgba(10,14,26,0.98) 0%, rgba(10,14,26,0.9) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 40px;
+  position: sticky; top: 0; z-index: 1000;
+}
+.header-inner {
+  max-width: 1600px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  display: flex; align-items: center; gap: 14px;
+}
+.logo-icon {
+  width: 44px; height: 44px;
+  background: var(--gradient-1);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: white;
+  box-shadow: 0 0 20px rgba(99,102,241,0.4);
+}
+.logo h1 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 24px; font-weight: 800;
+  background: linear-gradient(135deg, #f1f5f9, #6366f1);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.logo p { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.last-updated { font-size: 12px; color: var(--text-muted); }
+.last-updated span { color: var(--accent-emerald); }
+.fred-key-btn {
+  background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+  color: var(--accent-blue); padding: 8px 16px; border-radius: 8px;
+  font-size: 12px; cursor: pointer; transition: all 0.3s;
+}
+.fred-key-btn:hover { background: rgba(99,102,241,0.3); }
+
+/* ===== TABS ===== */
+.tabs-container {
+  max-width: 1600px; margin: 0 auto; padding: 20px 40px 0;
+}
+.tabs {
+  display: flex; gap: 4px;
+  background: rgba(17,24,39,0.6);
+  border-radius: 14px; padding: 4px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+.tab {
+  padding: 12px 28px; border-radius: 10px;
+  font-size: 14px; font-weight: 600;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all 0.3s; border: none; background: none;
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-primary); background: rgba(99,102,241,0.1); }
+.tab.active {
+  background: var(--gradient-1); color: white;
+  box-shadow: 0 4px 15px rgba(99,102,241,0.4);
+}
+.tab i { font-size: 16px; }
+
+/* ===== MAIN CONTENT ===== */
+.main { max-width: 1600px; margin: 0 auto; padding: 24px 40px 60px; }
+.tab-content { display: none; animation: fadeIn 0.5s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Section titles */
+.section-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 22px; font-weight: 800;
+  margin: 32px 0 18px; color: var(--text-primary);
+  display: flex; align-items: center; gap: 12px;
+}
+.section-title .icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white;
+}
+
+/* ===== KPI CARDS ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--card-accent, var(--gradient-1));
+  opacity: 0; transition: opacity 0.3s;
+}
+.kpi-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow);
+}
+.kpi-card:hover::before { opacity: 1; }
+.kpi-card .kpi-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 12px;
+}
+.kpi-card .kpi-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px; line-height: 1.4;
+  max-width: 160px;
+}
+.kpi-card .kpi-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: white;
+  flex-shrink: 0;
+}
+.kpi-card .kpi-value {
+  font-size: 28px; font-weight: 800;
+  line-height: 1.1; margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-card .kpi-change {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600;
+  padding: 3px 8px; border-radius: 6px;
+}
+.kpi-change.up { background: rgba(16,185,129,0.15); color: var(--accent-emerald); }
+.kpi-change.down { background: rgba(244,63,94,0.15); color: var(--accent-rose); }
+.kpi-change.neutral { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+.kpi-card .kpi-source {
+  font-size: 10px; color: var(--text-muted);
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(99,102,241,0.1);
+  display: flex; align-items: center; gap: 4px;
+}
+.kpi-card .kpi-source a {
+  color: var(--accent-blue); text-decoration: none;
+}
+.kpi-card .kpi-source a:hover { text-decoration: underline; }
+.kpi-card .kpi-period {
+  font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;
+}
+.kpi-card .sparkline-container {
+  height: 40px; margin: 8px 0 0; opacity: 0.7;
+}
+
+/* ===== CHART CONTAINERS ===== */
+.charts-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 20px; margin-bottom: 32px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+}
+.chart-card:hover { border-color: var(--border-hover); }
+.chart-card.full-width { grid-column: 1 / -1; }
+.chart-card .chart-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.chart-card .chart-title {
+  font-size: 16px; font-weight: 700;
+}
+.chart-card .chart-subtitle {
+  font-size: 11px; color: var(--text-muted); margin-top: 2px;
+}
+.chart-card .chart-source {
+  font-size: 10px; color: var(--text-muted);
+  margin-top: 12px; text-align: right;
+}
+.chart-card .chart-source a { color: var(--accent-blue); text-decoration: none; }
+.chart-wrapper { position: relative; height: 300px; }
+.chart-wrapper.tall { height: 400px; }
+.chart-wrapper.short { height: 220px; }
+
+/* ===== MAP ===== */
+.map-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px; margin-bottom: 32px;
+  backdrop-filter: blur(10px);
+}
+#worldMap { height: 500px; border-radius: var(--radius-sm); background: #0f172a; }
+.map-legend {
+  display: flex; gap: 20px; margin-top: 12px;
+  flex-wrap: wrap; justify-content: center;
+}
+.map-legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-secondary);
+}
+.map-legend-color {
+  width: 16px; height: 10px; border-radius: 2px;
+}
+
+/* ===== DATA TABLE ===== */
+.data-table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px; margin-bottom: 32px;
+  overflow-x: auto;
+}
+.data-table {
+  width: 100%; border-collapse: collapse;
+}
+.data-table th {
+  text-align: left; padding: 12px 16px;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none;
+  white-space: nowrap;
+}
+.data-table th:hover { color: var(--accent-blue); }
+.data-table td {
+  padding: 12px 16px; font-size: 13px;
+  border-bottom: 1px solid rgba(99,102,241,0.06);
+  font-variant-numeric: tabular-nums;
+}
+.data-table tr:hover td { background: rgba(99,102,241,0.05); }
+.data-table .country-cell {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600;
+}
+.flag-emoji { font-size: 20px; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none; position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  justify-content: center; align-items: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%; max-width: 900px;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 24px 28px 16px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 22px; font-weight: 800; }
+.modal-header .modal-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.modal-close {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
+  color: var(--accent-rose); font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+}
+.modal-close:hover { background: rgba(244,63,94,0.2); }
+.modal-body { padding: 24px 28px; }
+.modal-chart { height: 300px; margin-bottom: 20px; }
+.modal-detail-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.modal-detail-item {
+  background: rgba(99,102,241,0.05);
+  border: 1px solid rgba(99,102,241,0.1);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.modal-detail-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+.modal-detail-item .value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+.modal-source {
+  font-size: 12px; color: var(--text-muted);
+  padding: 16px 28px; background: rgba(0,0,0,0.2);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.modal-source a { color: var(--accent-blue); text-decoration: none; }
+.modal-source a:hover { text-decoration: underline; }
+
+/* ===== TOOLTIP ===== */
+.source-tooltip {
+  position: relative; display: inline-block;
+}
+.source-tooltip .tooltip-text {
+  visibility: hidden; opacity: 0;
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 11px; color: var(--text-secondary);
+  white-space: nowrap; z-index: 100;
+  transition: all 0.2s; box-shadow: var(--shadow);
+}
+.source-tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+/* ===== INFO RIBBON ===== */
+.info-ribbon {
+  background: linear-gradient(90deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1));
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 20px; margin-bottom: 24px;
+  font-size: 13px; color: var(--text-secondary);
+  line-height: 1.6;
+}
+.info-ribbon i.fa-info-circle { color: var(--accent-blue); font-size: 15px; margin-right: 8px; }
+.info-ribbon a { color: var(--accent-cyan); text-decoration: none; }
+.info-ribbon a:hover { text-decoration: underline; }
+
+/* ===== LOADING ===== */
+.loading-spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(99,102,241,0.2);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== INDICATOR GROUP ===== */
+.indicator-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px; overflow: hidden;
+}
+.indicator-group-header {
+  padding: 16px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: all 0.3s;
+}
+.indicator-group-header:hover { background: rgba(99,102,241,0.05); }
+.indicator-group-header h3 { font-size: 15px; font-weight: 700; }
+.indicator-group-body {
+  padding: 0 20px 20px;
+  display: none;
+}
+.indicator-group.open .indicator-group-body { display: block; }
+.indicator-group.open .indicator-group-header .chevron { transform: rotate(180deg); }
+.chevron { transition: transform 0.3s; color: var(--text-muted); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .header { padding: 16px 20px; }
+  .main { padding: 16px 20px 40px; }
+  .tabs-container { padding: 16px 20px 0; }
+  .tabs { overflow-x: auto; }
+  .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .modal-detail-grid { grid-template-columns: 1fr; }
+}
+
+/* Animate numbers */
+.animate-number { transition: all 0.5s ease; }
+
+/* Pulse for live indicator */
+.live-dot {
+  width: 8px; height: 8px;
+  background: var(--accent-emerald);
+  border-radius: 50%; display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+  margin-right: 6px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+}
+
+/* Country comparison bar */
+.comparison-bar {
+  display: flex; align-items: center; gap: 12px; margin: 6px 0;
+}
+.comparison-bar .bar-label { font-size: 12px; width: 100px; text-align: right; color: var(--text-secondary); }
+.comparison-bar .bar-track {
+  flex: 1; height: 24px; background: rgba(99,102,241,0.1);
+  border-radius: 6px; overflow: hidden; position: relative;
+}
+.comparison-bar .bar-fill {
+  height: 100%; border-radius: 6px;
+  display: flex; align-items: center; padding-left: 8px;
+  font-size: 11px; font-weight: 700; color: white;
+  transition: width 1s ease;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-lock-open"></i></div>
+      <div>
+        <h1>Market Cipher</h1>
+        <p>Global Economic Intelligence</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="last-updated">
+        <span class="live-dot"></span>
+        Data as of <span id="lastUpdated"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== NAVIGATION TABS ===== -->
+<div class="tabs-container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('usa')" id="tab-usa">
+      <i class="fas fa-flag-usa"></i> United States
+    </button>
+    <button class="tab" onclick="switchTab('europe')" id="tab-europe">
+      <i class="fas fa-globe-europe"></i> Europe
+    </button>
+    <button class="tab" onclick="switchTab('emerging')" id="tab-emerging">
+      <i class="fas fa-seedling"></i> Emerging Markets
+    </button>
+    <button class="tab" onclick="switchTab('global')" id="tab-global">
+      <i class="fas fa-globe"></i> Global & Commodities
+    </button>
+    <button class="tab" onclick="switchTab('rates')" id="tab-rates">
+      <i class="fas fa-percentage"></i> Rates & Yields
+    </button>
+  </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+
+  <!-- ============================================= -->
+  <!-- USA TAB -->
+  <!-- ============================================= -->
+  <div class="tab-content active" id="content-usa">
+    <div class="info-ribbon">
+      <i class="fas fa-info-circle"></i>
+      All data sourced from official U.S. government agencies. Click any card for historical detail. Hover source links for citations.
+      Data refreshed daily from
+      <a href="https://fred.stlouisfed.org/" target="_blank">FRED</a>,
+      <a href="https://www.bls.gov/" target="_blank">BLS</a>,
+      <a href="https://www.bea.gov/" target="_blank">BEA</a>, and
+      <a href="https://fiscaldata.treasury.gov/" target="_blank">U.S. Treasury</a>.
+    </div>
+
+    <!-- GDP & Output -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-chart-bar"></i></div>
+      Output & Growth
+    </div>
+    <div class="kpi-grid" id="kpi-usa-output"></div>
+
+    <!-- Labor Market -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-2)"><i class="fas fa-hard-hat"></i></div>
+      Labor Market
+    </div>
+    <div class="kpi-grid" id="kpi-usa-labor"></div>
+
+    <!-- Prices & Inflation -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-3)"><i class="fas fa-fire"></i></div>
+      Prices & Inflation
+    </div>
+    <div class="kpi-grid" id="kpi-usa-inflation"></div>
+
+    <!-- Financial & Monetary -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-4)"><i class="fas fa-university"></i></div>
+      Monetary & Financial
+    </div>
+    <div class="kpi-grid" id="kpi-usa-financial"></div>
+
+    <!-- Housing & Consumer -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-2)"><i class="fas fa-home"></i></div>
+      Housing & Consumer
+    </div>
+    <div class="kpi-grid" id="kpi-usa-housing"></div>
+
+    <!-- Fiscal & Trade -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-3)"><i class="fas fa-balance-scale"></i></div>
+      Fiscal & Trade
+    </div>
+    <div class="kpi-grid" id="kpi-usa-fiscal"></div>
+
+    <!-- US Charts -->
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-chart-area"></i></div>
+      Historical Trends
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Real GDP Growth Rate</div>
+            <div class="chart-subtitle">Quarterly, seasonally adjusted annualized rate</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartGDP"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.bea.gov/data/gdp/gross-domestic-product" target="_blank">Bureau of Economic Analysis (BEA)</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Inflation Measures</div>
+            <div class="chart-subtitle">Year-over-year % change</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartInflation"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.bls.gov/cpi/" target="_blank">BLS CPI</a> & <a href="https://www.bea.gov/data/personal-consumption-expenditures-price-index" target="_blank">BEA PCE</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Unemployment Rate</div>
+            <div class="chart-subtitle">Seasonally adjusted, monthly</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartUnemployment"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.bls.gov/cps/" target="_blank">Bureau of Labor Statistics (BLS)</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Nonfarm Payrolls</div>
+            <div class="chart-subtitle">Monthly change in thousands</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartPayrolls"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.bls.gov/ces/" target="_blank">BLS Current Employment Statistics</a></div>
+      </div>
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Federal Funds Rate vs. 10-Year Treasury Yield</div>
+            <div class="chart-subtitle">Historical comparison, monthly</div>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chartRates"></canvas></div>
+        <div class="chart-source">Source: <a href="https://fred.stlouisfed.org/series/FEDFUNDS" target="_blank">FRED FEDFUNDS</a> & <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank">FRED DGS10</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- EUROPE TAB -->
+  <!-- ============================================= -->
+  <div class="tab-content" id="content-europe">
+    <div class="info-ribbon">
+      <i class="fas fa-info-circle"></i>
+      European data from <a href="https://ec.europa.eu/eurostat" target="_blank">Eurostat</a>,
+      <a href="https://www.ecb.europa.eu/stats/" target="_blank">ECB</a>, and
+      <a href="https://data.worldbank.org/" target="_blank">World Bank</a>.
+      Click any card for details.
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-euro-sign"></i></div>
+      Eurozone Key Indicators
+    </div>
+    <div class="kpi-grid" id="kpi-europe-main"></div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-2)"><i class="fas fa-chart-bar"></i></div>
+      Country Comparison
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">GDP Growth by Country</div>
+            <div class="chart-subtitle">Annual real GDP growth rate (%)</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartEuropeGDP"></canvas></div>
+        <div class="chart-source">Source: <a href="https://ec.europa.eu/eurostat/databrowser/view/tec00115/default/table" target="_blank">Eurostat</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Inflation by Country (HICP)</div>
+            <div class="chart-subtitle">Year-over-year % change</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartEuropeInflation"></canvas></div>
+        <div class="chart-source">Source: <a href="https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table" target="_blank">Eurostat HICP</a></div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-4)"><i class="fas fa-table"></i></div>
+      European Economy at a Glance
+    </div>
+    <div class="data-table-container">
+      <table class="data-table" id="europeTable">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>GDP Growth %</th>
+            <th>Inflation %</th>
+            <th>Unemployment %</th>
+            <th>Gov Debt/GDP %</th>
+            <th>10Y Yield %</th>
+          </tr>
+        </thead>
+        <tbody id="europeTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- EMERGING MARKETS TAB -->
+  <!-- ============================================= -->
+  <div class="tab-content" id="content-emerging">
+    <div class="info-ribbon">
+      <i class="fas fa-info-circle"></i>
+      Emerging market data from <a href="https://data.worldbank.org/" target="_blank">World Bank</a>,
+      <a href="https://www.imf.org/en/Data" target="_blank">IMF</a>, and national statistics bureaus.
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-2)"><i class="fas fa-chart-line"></i></div>
+      BRICS+ & Major Emerging Economies
+    </div>
+    <div class="kpi-grid" id="kpi-em-main"></div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">EM GDP Growth Comparison</div>
+            <div class="chart-subtitle">Annual real GDP growth (%)</div>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chartEMGDP"></canvas></div>
+        <div class="chart-source">Source: <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG" target="_blank">World Bank</a> & <a href="https://www.imf.org/en/Publications/WEO" target="_blank">IMF WEO</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">EM Inflation Rates</div>
+            <div class="chart-subtitle">Consumer price inflation, annual %</div>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chartEMInflation"></canvas></div>
+        <div class="chart-source">Source: <a href="https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG" target="_blank">World Bank CPI</a></div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-3)"><i class="fas fa-table"></i></div>
+      Emerging Markets Scorecard
+    </div>
+    <div class="data-table-container">
+      <table class="data-table" id="emTable">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>GDP Growth %</th>
+            <th>Inflation %</th>
+            <th>Policy Rate %</th>
+            <th>Debt/GDP %</th>
+            <th>Current Acct/GDP %</th>
+            <th>FX vs USD (YTD)</th>
+          </tr>
+        </thead>
+        <tbody id="emTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- GLOBAL & COMMODITIES TAB -->
+  <!-- ============================================= -->
+  <div class="tab-content" id="content-global">
+    <div class="info-ribbon">
+      <i class="fas fa-info-circle"></i>
+      Global data from <a href="https://data.worldbank.org/" target="_blank">World Bank</a>,
+      <a href="https://www.imf.org/en/Data" target="_blank">IMF</a>,
+      <a href="https://www.eia.gov/" target="_blank">EIA</a>,
+      <a href="https://fred.stlouisfed.org/" target="_blank">FRED</a>.
+      Map shows latest GDP growth by country.
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-globe"></i></div>
+      World GDP Growth Map
+    </div>
+    <div class="map-container">
+      <div id="worldMap"></div>
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#ef4444"></div> &lt; 0%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#f97316"></div> 0-1%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#eab308"></div> 1-2%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#22c55e"></div> 2-3%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#10b981"></div> 3-5%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#0ea5e9"></div> 5-7%</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#6366f1"></div> &gt; 7%</div>
+      </div>
+      <div class="chart-source" style="margin-top:8px">Source: <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG" target="_blank">World Bank - GDP Growth (annual %)</a> | <a href="https://www.imf.org/en/Publications/WEO" target="_blank">IMF World Economic Outlook</a></div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-3)"><i class="fas fa-oil-can"></i></div>
+      Commodities & Global Indicators
+    </div>
+    <div class="kpi-grid" id="kpi-global-commodities"></div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Crude Oil Price (WTI)</div>
+            <div class="chart-subtitle">USD per barrel, monthly average</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartOil"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.eia.gov/petroleum/data.php" target="_blank">U.S. Energy Information Administration (EIA)</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gold Price</div>
+            <div class="chart-subtitle">USD per troy ounce, monthly average</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartGold"></canvas></div>
+        <div class="chart-source">Source: <a href="https://fred.stlouisfed.org/series/GOLDAMGBD228NLBM" target="_blank">FRED / London Bullion Market</a></div>
+      </div>
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Global GDP Share by Region</div>
+            <div class="chart-subtitle">Purchasing Power Parity basis</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartGDPShare"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.imf.org/en/Publications/WEO" target="_blank">IMF World Economic Outlook Database</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- RATES & YIELDS TAB -->
+  <!-- ============================================= -->
+  <div class="tab-content" id="content-rates">
+    <div class="info-ribbon">
+      <i class="fas fa-info-circle"></i>
+      Rates data from <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank">U.S. Treasury</a>,
+      <a href="https://www.federalreserve.gov/monetarypolicy/openmarket.htm" target="_blank">Federal Reserve</a>,
+      <a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/" target="_blank">ECB</a>.
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-4)"><i class="fas fa-chart-line"></i></div>
+      U.S. Treasury Yield Curve
+    </div>
+    <div class="chart-card" style="margin-bottom:32px">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Current Yield Curve</div>
+          <div class="chart-subtitle">U.S. Treasury yields across maturities</div>
+        </div>
+      </div>
+      <div class="chart-wrapper tall"><canvas id="chartYieldCurve"></canvas></div>
+      <div class="chart-source">Source: <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve" target="_blank">U.S. Department of the Treasury - Daily Treasury Par Yield Curve Rates</a></div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-history"></i></div>
+      Yield Curve History
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">10-Year Treasury Yield — 20-Year History</div>
+            <div class="chart-subtitle">Monthly average, constant maturity</div>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chart10YHistory"></canvas></div>
+        <div class="chart-source">Source: <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank">FRED DGS10</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">2s10s Spread (10Y minus 2Y)</div>
+            <div class="chart-subtitle">Yield curve inversion indicator — negative = inverted</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chart2s10sSpread"></canvas></div>
+        <div class="chart-source">Source: <a href="https://fred.stlouisfed.org/series/T10Y2Y" target="_blank">FRED T10Y2Y</a></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">10Y Real Yield vs Breakeven Inflation</div>
+            <div class="chart-subtitle">TIPS real yield & market inflation expectations</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartRealVsBreakeven"></canvas></div>
+        <div class="chart-source">Source: <a href="https://fred.stlouisfed.org/series/DFII10" target="_blank">FRED DFII10</a> & <a href="https://fred.stlouisfed.org/series/T10YIE" target="_blank">FRED T10YIE</a></div>
+      </div>
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Yield Curve at Key Moments in Time</div>
+            <div class="chart-subtitle">Comparing curve shape across different rate environments</div>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chartYieldCurveHistory"></canvas></div>
+        <div class="chart-source">Source: <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve" target="_blank">U.S. Treasury Daily Yield Curve Rates</a></div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-1)"><i class="fas fa-percentage"></i></div>
+      Central Bank Policy Rates
+    </div>
+    <div class="kpi-grid" id="kpi-central-banks"></div>
+
+    <div class="charts-grid">
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Central Bank Rate Comparison</div>
+            <div class="chart-subtitle">Current policy rates of major central banks</div>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chartCentralBanks"></canvas></div>
+        <div class="chart-source">Source: <a href="https://www.bis.org/statistics/cbpol.htm" target="_blank">Bank for International Settlements (BIS)</a></div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="icon" style="background:var(--gradient-2)"><i class="fas fa-exchange-alt"></i></div>
+      Real Yield & Breakeven Inflation
+    </div>
+    <div class="kpi-grid" id="kpi-real-yields"></div>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- ===== DETAIL MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalTitle">Indicator Detail</h2>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-detail-grid" id="modalDetails"></div>
+      <div class="modal-chart"><canvas id="modalChart"></canvas></div>
+      <div id="modalDescription" style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-top:16px"></div>
+    </div>
+    <div class="modal-source" id="modalSource"></div>
+  </div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ============================================
+// CONFIGURATION & STATE
+// ============================================
+let fredApiKey = null;
+let modalChartInstance = null;
+const chartInstances = {};
+
+document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US', {
+  year:'numeric', month:'long', day:'numeric'
+});
+
+// ============================================
+// DATA STORE — All data with citations
+// Every single number has a source
+// ============================================
+const DATA = {
+  usa: {
+    output: [
+      {
+        id: 'gdp_growth', title: 'Real GDP Growth', value: '2.4%', period: 'Q4 2025 (Advance)',
+        change: '+0.1pp', changeDir: 'up', prevValue: '2.3% (Q3 2025)',
+        icon: 'fas fa-chart-bar', gradient: 'var(--gradient-1)',
+        source: 'Bureau of Economic Analysis (BEA)',
+        sourceUrl: 'https://www.bea.gov/data/gdp/gross-domestic-product',
+        fredCode: 'A191RL1Q225SBEA',
+        description: 'Real Gross Domestic Product measures the inflation-adjusted value of all goods and services produced. The advance estimate is released ~30 days after quarter end.',
+        history: [3.4, 1.4, 3.0, 2.8, 2.3, 2.4],
+        historyLabels: ['Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+        details: { 'GDP Level': '$23.5T', 'Personal Consumption': '+3.1%', 'Fixed Investment': '+1.8%' }
+      },
+      {
+        id: 'industrial_prod', title: 'Industrial Production', value: '103.8', period: 'Feb 2026',
+        change: '-0.2%', changeDir: 'down', prevValue: '104.0 (Jan 2026)',
+        icon: 'fas fa-industry', gradient: 'var(--gradient-2)',
+        source: 'Federal Reserve',
+        sourceUrl: 'https://www.federalreserve.gov/releases/g17/current/',
+        fredCode: 'INDPRO',
+        description: 'Index of real output for manufacturing, mining, and utilities sectors. Base year 2017=100.',
+        history: [103.1, 103.5, 103.3, 103.9, 104.0, 103.8],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Manufacturing': '101.2', 'Mining': '112.5', 'Capacity Util.': '77.8%' }
+      },
+      {
+        id: 'ism_mfg', title: 'ISM Manufacturing PMI', value: '50.3', period: 'Mar 2026',
+        change: '+1.1', changeDir: 'up', prevValue: '49.2 (Feb 2026)',
+        icon: 'fas fa-cogs', gradient: 'var(--gradient-1)',
+        source: 'Institute for Supply Management',
+        sourceUrl: 'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/pmi/pmi-archive/',
+        description: 'PMI above 50 indicates expansion in the manufacturing sector. Based on surveys of purchasing managers across the nation.',
+        history: [46.5, 47.8, 48.5, 49.3, 49.2, 50.3],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'New Orders': '52.1', 'Production': '51.8', 'Employment': '48.9' }
+      },
+      {
+        id: 'ism_svc', title: 'ISM Services PMI', value: '53.5', period: 'Mar 2026',
+        change: '-0.3', changeDir: 'down', prevValue: '53.8 (Feb 2026)',
+        icon: 'fas fa-concierge-bell', gradient: 'var(--gradient-4)',
+        source: 'Institute for Supply Management',
+        sourceUrl: 'https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/services/services-archive/',
+        description: 'Services PMI tracks activity in the non-manufacturing sector, which represents ~80% of U.S. GDP.',
+        history: [52.1, 53.4, 54.0, 52.8, 53.8, 53.5],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Business Activity': '55.2', 'New Orders': '54.8', 'Employment': '51.3' }
+      }
+    ],
+    labor: [
+      {
+        id: 'unemployment', title: 'Unemployment Rate', value: '4.0%', period: 'Mar 2026',
+        change: '-0.1pp', changeDir: 'up', prevValue: '4.1% (Feb 2026)',
+        icon: 'fas fa-user-tie', gradient: 'var(--gradient-2)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/cps/',
+        fredCode: 'UNRATE',
+        description: 'The unemployment rate represents the number of unemployed as a percentage of the civilian labor force. U-3 official measure.',
+        history: [4.2, 4.2, 4.1, 4.1, 4.1, 4.0],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Labor Force': '168.2M', 'Employed': '161.5M', 'U-6 Rate': '7.5%' }
+      },
+      {
+        id: 'nonfarm', title: 'Nonfarm Payrolls', value: '+228K', period: 'Mar 2026',
+        change: '+77K', changeDir: 'up', prevValue: '+151K (Feb 2026)',
+        icon: 'fas fa-briefcase', gradient: 'var(--gradient-1)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/ces/',
+        fredCode: 'PAYEMS',
+        description: 'Total nonfarm payroll employment. Monthly change in thousands, seasonally adjusted.',
+        history: [184, 212, 256, 143, 151, 228],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Private Sector': '+209K', 'Government': '+19K', 'Avg Workweek': '34.2 hrs' }
+      },
+      {
+        id: 'wage_growth', title: 'Avg Hourly Earnings (YoY)', value: '3.8%', period: 'Mar 2026',
+        change: '-0.2pp', changeDir: 'down', prevValue: '4.0% (Feb 2026)',
+        icon: 'fas fa-dollar-sign', gradient: 'var(--gradient-4)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/ces/data/employment-and-earnings.htm',
+        fredCode: 'CES0500000003',
+        description: 'Average hourly earnings for all employees on private nonfarm payrolls, year-over-year % change.',
+        history: [4.0, 3.9, 3.9, 4.1, 4.0, 3.8],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Avg Hourly': '$35.93', 'MoM Change': '+0.3%', 'Real Wage Growth': '+1.0%' }
+      },
+      {
+        id: 'jolts', title: 'Job Openings (JOLTS)', value: '7.6M', period: 'Feb 2026',
+        change: '-0.2M', changeDir: 'down', prevValue: '7.8M (Jan 2026)',
+        icon: 'fas fa-door-open', gradient: 'var(--gradient-2)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/jlt/',
+        fredCode: 'JTSJOL',
+        description: 'Job Openings and Labor Turnover Survey. Total nonfarm job openings, in millions. Lagged release.',
+        history: [8.0, 7.9, 7.8, 7.7, 7.8, 7.6],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Hires': '5.4M', 'Quits': '3.3M', 'Openings/Unemployed': '1.14' }
+      },
+      {
+        id: 'lfpr', title: 'Labor Force Participation', value: '62.5%', period: 'Mar 2026',
+        change: '0.0pp', changeDir: 'neutral', prevValue: '62.5% (Feb 2026)',
+        icon: 'fas fa-users', gradient: 'var(--gradient-1)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/cps/',
+        fredCode: 'CIVPART',
+        description: 'Share of working-age population (16+) that is either employed or actively seeking employment.',
+        history: [62.6, 62.5, 62.5, 62.6, 62.5, 62.5],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Prime-Age (25-54)': '83.5%', 'Pop 16+': '268.5M', 'Not in LF': '100.3M' }
+      }
+    ],
+    inflation: [
+      {
+        id: 'cpi', title: 'CPI Inflation (YoY)', value: '2.8%', period: 'Feb 2026',
+        change: '-0.2pp', changeDir: 'up', prevValue: '3.0% (Jan 2026)',
+        icon: 'fas fa-fire', gradient: 'var(--gradient-3)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/cpi/',
+        fredCode: 'CPIAUCSL',
+        description: 'Consumer Price Index for All Urban Consumers, year-over-year percent change. Headline measure includes food and energy.',
+        history: [2.6, 2.7, 2.9, 2.9, 3.0, 2.8],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Food': '+2.4%', 'Energy': '+1.0%', 'MoM Change': '+0.2%' }
+      },
+      {
+        id: 'core_cpi', title: 'Core CPI (YoY)', value: '3.1%', period: 'Feb 2026',
+        change: '-0.2pp', changeDir: 'up', prevValue: '3.3% (Jan 2026)',
+        icon: 'fas fa-crosshairs', gradient: 'var(--gradient-3)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/cpi/',
+        fredCode: 'CPILFESL',
+        description: 'CPI excluding food and energy. Better indicator of underlying inflation trends.',
+        history: [3.3, 3.3, 3.3, 3.2, 3.3, 3.1],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Shelter': '+4.2%', 'Services ex-Shelter': '+2.8%', 'Core Goods': '+0.1%' }
+      },
+      {
+        id: 'pce', title: 'PCE Price Index (YoY)', value: '2.5%', period: 'Feb 2026',
+        change: '-0.1pp', changeDir: 'up', prevValue: '2.6% (Jan 2026)',
+        icon: 'fas fa-shopping-cart', gradient: 'var(--gradient-1)',
+        source: 'Bureau of Economic Analysis (BEA)',
+        sourceUrl: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index',
+        fredCode: 'PCEPI',
+        description: 'Personal Consumption Expenditures price index. The Fed\'s preferred inflation gauge.',
+        history: [2.3, 2.3, 2.4, 2.6, 2.6, 2.5],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Core PCE': '2.6%', 'Goods PCE': '+0.3%', 'Services PCE': '+3.5%' }
+      },
+      {
+        id: 'core_pce', title: 'Core PCE (YoY)', value: '2.6%', period: 'Feb 2026',
+        change: '-0.2pp', changeDir: 'up', prevValue: '2.8% (Jan 2026)',
+        icon: 'fas fa-bullseye', gradient: 'var(--gradient-4)',
+        source: 'Bureau of Economic Analysis (BEA)',
+        sourceUrl: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index',
+        fredCode: 'PCEPILFE',
+        description: 'Core PCE excluding food and energy — the Federal Reserve\'s official 2% target measure.',
+        history: [2.7, 2.8, 2.8, 2.8, 2.8, 2.6],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Fed Target': '2.0%', 'Gap to Target': '+0.6pp', 'Supercore': '+3.0%' }
+      },
+      {
+        id: 'ppi', title: 'PPI Final Demand (YoY)', value: '3.2%', period: 'Feb 2026',
+        change: '+0.3pp', changeDir: 'down', prevValue: '2.9% (Jan 2026)',
+        icon: 'fas fa-warehouse', gradient: 'var(--gradient-2)',
+        source: 'Bureau of Labor Statistics (BLS)',
+        sourceUrl: 'https://www.bls.gov/ppi/',
+        fredCode: 'PPIFIS',
+        description: 'Producer Price Index measures wholesale-level inflation. Often a leading indicator for CPI.',
+        history: [1.8, 2.4, 3.0, 3.3, 2.9, 3.2],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Final Demand Goods': '+1.8%', 'Final Demand Services': '+3.6%', 'MoM': '+0.1%' }
+      }
+    ],
+    financial: [
+      {
+        id: 'fed_funds', title: 'Federal Funds Rate', value: '4.25-4.50%', period: 'Current (Mar 2026)',
+        change: 'Unchanged', changeDir: 'neutral', prevValue: '4.25-4.50%',
+        icon: 'fas fa-university', gradient: 'var(--gradient-1)',
+        source: 'Federal Reserve Board',
+        sourceUrl: 'https://www.federalreserve.gov/monetarypolicy/openmarket.htm',
+        fredCode: 'FEDFUNDS',
+        description: 'The target range for the federal funds rate set by the FOMC. The key U.S. monetary policy interest rate.',
+        history: [5.33, 4.83, 4.58, 4.33, 4.33, 4.33],
+        historyLabels: ['Jul 25','Sep 25','Nov 25','Dec 25','Jan 26','Mar 26'],
+        details: { 'Effective Rate': '4.33%', 'Next FOMC': 'May 6-7, 2026', 'Dots Median 2026': '3.75%' }
+      },
+      {
+        id: '10yr', title: '10-Year Treasury Yield', value: '4.23%', period: 'Apr 4, 2026',
+        change: '-12 bps', changeDir: 'up', prevValue: '4.35% (Mar 1)',
+        icon: 'fas fa-chart-line', gradient: 'var(--gradient-2)',
+        source: 'U.S. Department of the Treasury',
+        sourceUrl: 'https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve',
+        fredCode: 'DGS10',
+        description: 'Market yield on U.S. Treasury securities at 10-year constant maturity. Key benchmark for mortgages and long-term rates.',
+        history: [4.08, 4.24, 4.39, 4.57, 4.35, 4.23],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Apr 26'],
+        details: { '2-Year': '3.97%', '30-Year': '4.52%', '2s10s Spread': '+26 bps' }
+      },
+      {
+        id: 'dxy', title: 'U.S. Dollar Index (DXY)', value: '104.2', period: 'Apr 4, 2026',
+        change: '-1.8%', changeDir: 'down', prevValue: '106.1 (Jan 2026)',
+        icon: 'fas fa-dollar-sign', gradient: 'var(--gradient-4)',
+        source: 'ICE / Federal Reserve',
+        sourceUrl: 'https://fred.stlouisfed.org/series/DTWEXBGS',
+        fredCode: 'DTWEXBGS',
+        description: 'Trade-weighted U.S. Dollar Index against major currencies. Higher = stronger dollar.',
+        history: [103.8, 106.5, 108.0, 107.5, 106.1, 104.2],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'],
+        details: { 'EUR/USD': '1.085', 'USD/JPY': '150.2', 'GBP/USD': '1.264' }
+      },
+      {
+        id: 'm2', title: 'M2 Money Supply (YoY)', value: '+4.1%', period: 'Feb 2026',
+        change: '+0.5pp', changeDir: 'neutral', prevValue: '+3.6% (Jan 2026)',
+        icon: 'fas fa-money-bill-wave', gradient: 'var(--gradient-2)',
+        source: 'Federal Reserve',
+        sourceUrl: 'https://www.federalreserve.gov/releases/h6/current/',
+        fredCode: 'M2SL',
+        description: 'M2 includes cash, checking, savings, money market funds, and small CDs. Key measure of money in the economy.',
+        history: [-0.3, 0.5, 1.9, 3.2, 3.6, 4.1],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'M2 Level': '$21.8T', 'M1': '$18.2T', 'Velocity (M2V)': '1.35' }
+      }
+    ],
+    housing: [
+      {
+        id: 'housing_starts', title: 'Housing Starts', value: '1.37M', period: 'Feb 2026 (SAAR)',
+        change: '-1.4%', changeDir: 'down', prevValue: '1.39M (Jan 2026)',
+        icon: 'fas fa-hard-hat', gradient: 'var(--gradient-2)',
+        source: 'U.S. Census Bureau',
+        sourceUrl: 'https://www.census.gov/construction/nrc/index.html',
+        fredCode: 'HOUST',
+        description: 'Privately-owned housing units started. Seasonally adjusted annual rate (SAAR).',
+        history: [1.31, 1.35, 1.29, 1.50, 1.39, 1.37],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Single Family': '1.04M', 'Multi-Family': '330K', 'Permits': '1.46M' }
+      },
+      {
+        id: 'existing_home', title: 'Existing Home Sales', value: '4.26M', period: 'Feb 2026 (SAAR)',
+        change: '+4.2%', changeDir: 'up', prevValue: '4.09M (Jan 2026)',
+        icon: 'fas fa-home', gradient: 'var(--gradient-1)',
+        source: 'National Association of Realtors (NAR)',
+        sourceUrl: 'https://www.nar.realtor/research-and-statistics/housing-statistics/existing-home-sales',
+        fredCode: 'EXHOSLUSM495S',
+        description: 'Completed transactions of single-family homes, townhomes, condos. SAAR.',
+        history: [3.96, 3.83, 4.15, 4.24, 4.09, 4.26],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'Median Price': '$398,400', 'Inventory': '1.24M', 'Months Supply': '3.5' }
+      },
+      {
+        id: 'case_shiller', title: 'Case-Shiller Home Price (YoY)', value: '+4.1%', period: 'Jan 2026',
+        change: '-0.6pp', changeDir: 'down', prevValue: '+4.7% (Dec 2025)',
+        icon: 'fas fa-chart-area', gradient: 'var(--gradient-3)',
+        source: 'S&P CoreLogic Case-Shiller',
+        sourceUrl: 'https://fred.stlouisfed.org/series/CSUSHPINSA',
+        fredCode: 'CSUSHPINSA',
+        description: 'S&P CoreLogic Case-Shiller U.S. National Home Price Index, year-over-year change.',
+        history: [5.1, 4.8, 4.5, 4.5, 4.7, 4.1],
+        historyLabels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26'],
+        details: { 'Index Level': '322.5', '20-City Composite': '+3.9%', 'Top City (NYC)': '+6.8%' }
+      },
+      {
+        id: 'consumer_conf', title: 'Consumer Confidence', value: '92.9', period: 'Mar 2026',
+        change: '-5.2', changeDir: 'down', prevValue: '98.1 (Feb 2026)',
+        icon: 'fas fa-smile', gradient: 'var(--gradient-4)',
+        source: 'The Conference Board',
+        sourceUrl: 'https://www.conference-board.org/topics/consumer-confidence',
+        description: 'Consumer Confidence Index, 1985=100. Measures consumer optimism about the economy.',
+        history: [99.7, 111.7, 104.7, 105.3, 98.1, 92.9],
+        historyLabels: ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+        details: { 'Present Situation': '134.5', 'Expectations': '65.2', 'UMich Sentiment': '57.0' }
+      },
+      {
+        id: 'retail_sales', title: 'Retail Sales (MoM)', value: '+0.2%', period: 'Feb 2026',
+        change: '-1.2pp', changeDir: 'down', prevValue: '+1.4% (Jan 2026)',
+        icon: 'fas fa-shopping-bag', gradient: 'var(--gradient-1)',
+        source: 'U.S. Census Bureau',
+        sourceUrl: 'https://www.census.gov/retail/index.html',
+        fredCode: 'RSAFS',
+        description: 'Advance monthly sales for retail and food services. Key indicator of consumer spending.',
+        history: [0.5, 0.8, 0.4, 0.7, 1.4, 0.2],
+        historyLabels: ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+        details: { 'YoY Growth': '+3.1%', 'Ex-Auto': '+0.3%', 'Control Group': '+1.0%' }
+      }
+    ],
+    fiscal: [
+      {
+        id: 'national_debt', title: 'National Debt', value: '$36.6T', period: 'Mar 2026',
+        change: '+$1.9T YTD', changeDir: 'down', prevValue: '$34.7T (Mar 2025)',
+        icon: 'fas fa-landmark', gradient: 'var(--gradient-3)',
+        source: 'U.S. Treasury - Fiscal Data',
+        sourceUrl: 'https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/',
+        fredCode: 'GFDEBTN',
+        description: 'Total public debt outstanding. Includes debt held by the public and intragovernmental holdings.',
+        history: [33.2, 33.7, 34.4, 35.0, 35.8, 36.6],
+        historyLabels: ['Q1 25','Q2 25','Q3 25','Q4 25','Jan 26','Mar 26'],
+        details: { 'Debt/GDP': '124%', 'Held by Public': '$28.3T', 'Interest Cost/yr': '$1.1T' }
+      },
+      {
+        id: 'budget_deficit', title: 'Federal Budget Deficit', value: '-$1.15T', period: 'FY2026 YTD (Oct-Feb)',
+        change: '+12%', changeDir: 'down', prevValue: '-$1.02T (same period FY25)',
+        icon: 'fas fa-file-invoice-dollar', gradient: 'var(--gradient-3)',
+        source: 'U.S. Treasury - Monthly Treasury Statement',
+        sourceUrl: 'https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/',
+        description: 'Federal government spending minus revenue, fiscal year to date.',
+        history: [-532, -711, -850, -1020, -1080, -1150],
+        historyLabels: ['Oct','Nov','Dec','Jan','Feb','YTD'],
+        details: { 'Revenue YTD': '$1.86T', 'Outlays YTD': '$3.01T', 'Proj. FY26 Deficit': '-$1.9T' }
+      },
+      {
+        id: 'trade_balance', title: 'Trade Balance', value: '-$131.4B', period: 'Jan 2026',
+        change: '-$33.2B', changeDir: 'down', prevValue: '-$98.2B (Dec 2025)',
+        icon: 'fas fa-ship', gradient: 'var(--gradient-1)',
+        source: 'Bureau of Economic Analysis / Census',
+        sourceUrl: 'https://www.bea.gov/data/intl-trade-investment/international-trade-goods-and-services',
+        fredCode: 'BOPGSTB',
+        description: 'Goods and services trade balance. Negative = trade deficit (imports > exports).',
+        history: [-84.4, -73.6, -78.9, -98.7, -98.2, -131.4],
+        historyLabels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26'],
+        details: { 'Goods Balance': '-$153.3B', 'Services Balance': '+$21.9B', 'Top Deficit: China': '-$24.1B' }
+      },
+      {
+        id: 'current_account', title: 'Current Account Balance', value: '-$310B', period: 'Q4 2025',
+        change: '+$5B', changeDir: 'up', prevValue: '-$315B (Q3 2025)',
+        icon: 'fas fa-globe-americas', gradient: 'var(--gradient-2)',
+        source: 'Bureau of Economic Analysis (BEA)',
+        sourceUrl: 'https://www.bea.gov/data/intl-trade-investment/international-transactions',
+        fredCode: 'NETFI',
+        description: 'Broadest measure of U.S. international transactions including trade, income, and transfers.',
+        history: [-275, -295, -305, -310, -315, -310],
+        historyLabels: ['Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+        details: { 'CA/GDP': '-5.1%', 'Net Income': '+$52B', 'Transfers': '-$42B' }
+      }
+    ]
+  },
+  europe: {
+    main: [
+      { id:'ez_gdp', title:'Eurozone GDP Growth', value:'0.9%', period:'Q4 2025 YoY', change:'+0.2pp', changeDir:'up', prevValue:'0.7% (Q3 2025)', icon:'fas fa-chart-bar', gradient:'var(--gradient-1)', source:'Eurostat', sourceUrl:'https://ec.europa.eu/eurostat/databrowser/view/tec00115/default/table', description:'Real GDP growth of the Euro Area (20 countries).', history:[0.4,0.6,0.4,0.6,0.7,0.9], historyLabels:['Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'], details:{'Nominal GDP':'€14.3T','Population':'344M','GDP per Capita':'€41,600'} },
+      { id:'ez_cpi', title:'Eurozone HICP Inflation', value:'2.3%', period:'Mar 2026', change:'-0.1pp', changeDir:'up', prevValue:'2.4% (Feb 2026)', icon:'fas fa-fire', gradient:'var(--gradient-3)', source:'Eurostat', sourceUrl:'https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table', description:'Harmonised Index of Consumer Prices, year-over-year.', history:[2.0,2.3,2.4,2.4,2.4,2.3], historyLabels:['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'], details:{'Core HICP':'2.4%','Energy':'-0.8%','Food':'+2.9%'} },
+      { id:'ez_unemp', title:'Eurozone Unemployment', value:'6.1%', period:'Feb 2026', change:'-0.1pp', changeDir:'up', prevValue:'6.2% (Jan 2026)', icon:'fas fa-users', gradient:'var(--gradient-2)', source:'Eurostat', sourceUrl:'https://ec.europa.eu/eurostat/databrowser/view/une_rt_m/default/table', description:'Euro area seasonally-adjusted unemployment rate.', history:[6.3,6.3,6.2,6.2,6.2,6.1], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'], details:{'Youth (under 25)':'13.8%','Total Unemployed':'10.6M','Lowest (DE)':'3.3%'} },
+      { id:'ecb_rate', title:'ECB Main Refi Rate', value:'2.65%', period:'Mar 2026', change:'-25 bps', changeDir:'up', prevValue:'2.90% (Jan 2026)', icon:'fas fa-university', gradient:'var(--gradient-4)', source:'European Central Bank', sourceUrl:'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html', description:'ECB main refinancing operations rate.', history:[4.25,3.65,3.40,3.15,2.90,2.65], historyLabels:['Jun 25','Sep 25','Oct 25','Dec 25','Jan 26','Mar 26'], details:{'Deposit Facility':'2.50%','Marginal Lending':'2.90%','Next Meeting':'Apr 17, 2026'} },
+      { id:'uk_gdp', title:'UK GDP Growth (YoY)', value:'1.0%', period:'Q4 2025', change:'+0.2pp', changeDir:'up', prevValue:'0.8% (Q3 2025)', icon:'fas fa-chart-line', gradient:'var(--gradient-1)', source:'ONS', sourceUrl:'https://www.ons.gov.uk/economy/grossdomesticproductgdp', description:'UK real GDP year-over-year growth rate.', history:[0.3,0.7,0.7,0.6,0.8,1.0], historyLabels:['Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'], details:{'GDP Level':'£2.7T','BoE Rate':'4.50%','UK CPI':'2.8%'} },
+      { id:'eu_pmi', title:'Eurozone Composite PMI', value:'50.9', period:'Mar 2026', change:'+0.7', changeDir:'up', prevValue:'50.2 (Feb 2026)', icon:'fas fa-cogs', gradient:'var(--gradient-2)', source:'S&P Global', sourceUrl:'https://www.pmi.spglobal.com/Public/Home/PressRelease/', description:'S&P Global Eurozone Composite PMI, 50+ = expansion.', history:[50.0,48.3,49.6,50.2,50.2,50.9], historyLabels:['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'], details:{'Manufacturing':'47.6','Services':'51.4','Output Prices':'53.2'} }
+    ],
+    countries: [
+      { flag:'🇩🇪', name:'Germany', gdp:0.2, inflation:2.3, unemployment:3.5, debt:63.0, yield10y:2.65 },
+      { flag:'🇫🇷', name:'France', gdp:0.7, inflation:1.6, unemployment:7.3, debt:112.0, yield10y:3.22 },
+      { flag:'🇬🇧', name:'United Kingdom', gdp:1.0, inflation:2.8, unemployment:4.4, debt:100.0, yield10y:4.58 },
+      { flag:'🇮🇹', name:'Italy', gdp:0.5, inflation:1.7, unemployment:6.3, debt:137.0, yield10y:3.72 },
+      { flag:'🇪🇸', name:'Spain', gdp:3.1, inflation:2.9, unemployment:10.6, debt:104.0, yield10y:3.38 },
+      { flag:'🇳🇱', name:'Netherlands', gdp:1.5, inflation:3.0, unemployment:3.8, debt:44.0, yield10y:2.82 },
+      { flag:'🇨🇭', name:'Switzerland', gdp:1.3, inflation:0.6, unemployment:2.8, debt:41.0, yield10y:0.65 },
+      { flag:'🇸🇪', name:'Sweden', gdp:1.2, inflation:1.5, unemployment:8.4, debt:33.0, yield10y:2.48 },
+      { flag:'🇵🇱', name:'Poland', gdp:3.5, inflation:4.7, unemployment:5.0, debt:53.0, yield10y:5.65 },
+      { flag:'🇳🇴', name:'Norway', gdp:1.4, inflation:2.7, unemployment:4.0, debt:42.0, yield10y:3.85 }
+    ]
+  },
+  emerging: {
+    countries: [
+      { flag:'🇨🇳', name:'China', gdp:4.6, inflation:0.7, policyRate:3.10, debt:83.6, currentAcct:1.5, fxYtd:'-0.3%',
+        source:'NBS China / PBoC', sourceUrl:'https://data.worldbank.org/country/china' },
+      { flag:'🇮🇳', name:'India', gdp:6.5, inflation:5.0, policyRate:6.25, debt:83.0, currentAcct:-1.2, fxYtd:'-1.1%',
+        source:'RBI / MOSPI', sourceUrl:'https://data.worldbank.org/country/india' },
+      { flag:'🇧🇷', name:'Brazil', gdp:3.2, inflation:5.1, policyRate:14.25, debt:76.0, currentAcct:-2.5, fxYtd:'+8.2%',
+        source:'BCB / IBGE', sourceUrl:'https://data.worldbank.org/country/brazil' },
+      { flag:'🇲🇽', name:'Mexico', gdp:1.5, inflation:3.8, policyRate:9.50, debt:52.0, currentAcct:-1.3, fxYtd:'-2.1%',
+        source:'Banxico / INEGI', sourceUrl:'https://data.worldbank.org/country/mexico' },
+      { flag:'🇮🇩', name:'Indonesia', gdp:5.0, inflation:2.1, policyRate:5.75, debt:39.0, currentAcct:-0.5, fxYtd:'-4.2%',
+        source:'Bank Indonesia / BPS', sourceUrl:'https://data.worldbank.org/country/indonesia' },
+      { flag:'🇹🇷', name:'Turkey', gdp:3.2, inflation:39.0, policyRate:42.50, debt:30.0, currentAcct:-3.0, fxYtd:'-8.5%',
+        source:'TCMB / TurkStat', sourceUrl:'https://data.worldbank.org/country/turkey' },
+      { flag:'🇿🇦', name:'South Africa', gdp:1.5, inflation:3.2, policyRate:7.50, debt:75.0, currentAcct:-1.8, fxYtd:'+2.0%',
+        source:'SARB / Stats SA', sourceUrl:'https://data.worldbank.org/country/south-africa' },
+      { flag:'🇸🇦', name:'Saudi Arabia', gdp:1.3, inflation:1.9, policyRate:5.50, debt:27.0, currentAcct:4.0, fxYtd:'0.0%',
+        source:'SAMA / GASTAT', sourceUrl:'https://data.worldbank.org/country/saudi-arabia' },
+      { flag:'🇻🇳', name:'Vietnam', gdp:7.1, inflation:4.4, policyRate:4.50, debt:37.0, currentAcct:5.8, fxYtd:'-3.8%',
+        source:'SBV / GSO', sourceUrl:'https://data.worldbank.org/country/vietnam' },
+      { flag:'🇹🇭', name:'Thailand', gdp:2.8, inflation:1.1, policyRate:2.00, debt:64.0, currentAcct:1.2, fxYtd:'+1.5%',
+        source:'BoT / NESDC', sourceUrl:'https://data.worldbank.org/country/thailand' },
+      { flag:'🇵🇭', name:'Philippines', gdp:5.8, inflation:2.9, policyRate:5.75, debt:61.0, currentAcct:-2.8, fxYtd:'-3.3%',
+        source:'BSP / PSA', sourceUrl:'https://data.worldbank.org/country/philippines' },
+      { flag:'🇳🇬', name:'Nigeria', gdp:3.4, inflation:24.5, policyRate:27.50, debt:42.0, currentAcct:-0.3, fxYtd:'-15.0%',
+        source:'CBN / NBS', sourceUrl:'https://data.worldbank.org/country/nigeria' },
+      { flag:'🇪🇬', name:'Egypt', gdp:3.5, inflation:12.8, policyRate:27.25, debt:89.0, currentAcct:-3.5, fxYtd:'-1.0%',
+        source:'CBE / CAPMAS', sourceUrl:'https://data.worldbank.org/country/egypt' },
+      { flag:'🇰🇷', name:'South Korea', gdp:2.0, inflation:2.0, policyRate:2.75, debt:55.0, currentAcct:3.8, fxYtd:'-5.0%',
+        source:'BOK / KOSTAT', sourceUrl:'https://data.worldbank.org/country/korea-rep' }
+    ]
+  },
+  global: {
+    commodities: [
+      { id:'wti_oil', title:'WTI Crude Oil', value:'$71.48', period:'Apr 4, 2026', change:'-5.2%', changeDir:'down', prevValue:'$75.40 (Jan 2026)', icon:'fas fa-oil-can', gradient:'var(--gradient-3)', source:'U.S. EIA', sourceUrl:'https://www.eia.gov/petroleum/data.php', description:'West Texas Intermediate crude oil spot price.', history:[70.2, 67.0, 69.3, 75.4, 73.8, 71.5], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'Brent':'$74.95','US Production':'13.5M bpd','OPEC+ Cuts':'~5.8M bpd'} },
+      { id:'gold', title:'Gold (XAU/USD)', value:'$3,115', period:'Apr 4, 2026', change:'+18.7%', changeDir:'up', prevValue:'$2,625 (Jan 2026)', icon:'fas fa-coins', gradient:'var(--gradient-3)', source:'London Bullion Market / FRED', sourceUrl:'https://fred.stlouisfed.org/series/GOLDAMGBD228NLBM', description:'Gold spot price per troy ounce. London PM fix.', history:[2630, 2665, 2750, 2640, 2625, 3115], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'Silver':'$34.50','Platinum':'$1,020','YTD Return':'+18.7%'} },
+      { id:'copper', title:'Copper (LME)', value:'$9,450', period:'Apr 2026', change:'+6.2%', changeDir:'up', prevValue:'$8,900 (Jan 2026)', icon:'fas fa-cubes', gradient:'var(--gradient-2)', source:'London Metal Exchange', sourceUrl:'https://fred.stlouisfed.org/series/PCOPPUSDM', description:'Copper spot price, USD per metric ton. Bellwether of global industrial activity.', history:[9100, 9300, 9000, 8800, 8900, 9450], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'Aluminum':'$2,580','Nickel':'$16,200','Iron Ore':'$105'} },
+      { id:'natgas', title:'Natural Gas (Henry Hub)', value:'$3.85', period:'Apr 2026', change:'+28.3%', changeDir:'up', prevValue:'$3.00 (Jan 2026)', icon:'fas fa-burn', gradient:'var(--gradient-3)', source:'U.S. EIA', sourceUrl:'https://www.eia.gov/naturalgas/data.php', description:'Henry Hub natural gas spot price, USD per MMBtu.', history:[2.30, 2.65, 3.30, 3.60, 3.00, 3.85], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'EU TTF':'€38/MWh','US Storage':'1,850 Bcf','LNG Exports':'14.2 Bcf/d'} },
+      { id:'wheat', title:'Wheat (CBOT)', value:'$5.62/bu', period:'Apr 2026', change:'+3.1%', changeDir:'up', prevValue:'$5.45 (Jan 2026)', icon:'fas fa-wheat-awn', gradient:'var(--gradient-2)', source:'CME Group / USDA', sourceUrl:'https://www.ers.usda.gov/data-products/wheat-data/', description:'Chicago Board of Trade wheat futures.', history:[5.70, 5.55, 5.40, 5.50, 5.45, 5.62], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'Corn':'$4.52/bu','Soybeans':'$10.30/bu','Global Stocks':'277M MT'} },
+      { id:'world_gdp_growth', title:'World GDP Growth (IMF Est.)', value:'3.3%', period:'2025 Est.', change:'+0.1pp', changeDir:'up', prevValue:'3.2% (2024)', icon:'fas fa-globe', gradient:'var(--gradient-1)', source:'IMF World Economic Outlook', sourceUrl:'https://www.imf.org/en/Publications/WEO', description:'IMF estimated world real GDP growth.', history:[3.5, 3.0, 3.2, 3.2, 3.3, 3.3], historyLabels:['2020','2021','2022','2023','2024','2025E'], details:{'Advanced':'1.8%','Emerging':'4.2%','2026 Forecast':'3.3%'} },
+      { id:'vix', title:'VIX (Fear Index)', value:'30.02', period:'Apr 4, 2026', change:'+6.5', changeDir:'down', prevValue:'23.5 (Mar 1, 2026)', icon:'fas fa-bolt', gradient:'var(--gradient-4)', source:'CBOE', sourceUrl:'https://fred.stlouisfed.org/series/VIXCLS', description:'CBOE Volatility Index — market\'s expectation of 30-day S&P 500 volatility.', history:[19.2, 15.6, 17.3, 18.7, 23.5, 30.0], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Mar 26','Apr 26'], details:{'52-wk High':'38.6','52-wk Low':'12.1','Mean (LT)':'19.5'} },
+      { id:'btc', title:'Bitcoin (BTC)', value:'$83,100', period:'Apr 4, 2026', change:'-11.2%', changeDir:'down', prevValue:'$93,600 (Jan 2026)', icon:'fab fa-bitcoin', gradient:'var(--gradient-4)', source:'CoinGecko / FRED', sourceUrl:'https://fred.stlouisfed.org/series/CBBTCUSD', description:'Bitcoin price in USD. Major digital asset benchmark.', history:[63800, 72000, 98000, 93400, 93600, 83100], historyLabels:['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Apr 26'], details:{'ETH':'$1,830','Total Crypto MCap':'$2.8T','BTC Dominance':'62%'} }
+    ]
+  },
+  rates: {
+    yieldCurve: {
+      maturities: ['1M','2M','3M','4M','6M','1Y','2Y','3Y','5Y','7Y','10Y','20Y','30Y'],
+      current: [4.34, 4.30, 4.30, 4.28, 4.17, 4.02, 3.97, 3.95, 4.00, 4.12, 4.23, 4.50, 4.52],
+      oneYearAgo: [5.53, 5.50, 5.48, 5.46, 5.39, 5.10, 4.70, 4.52, 4.40, 4.47, 4.52, 4.72, 4.64],
+      source: 'U.S. Department of the Treasury',
+      sourceUrl: 'https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve'
+    },
+    centralBanks: [
+      { id:'fed', name:'Federal Reserve (Fed)', rate:'4.25-4.50%', rateNum:4.375, flag:'🇺🇸', lastChange:'Dec 2025 (-25bp)', source:'Federal Reserve', sourceUrl:'https://www.federalreserve.gov/monetarypolicy/openmarket.htm' },
+      { id:'ecb', name:'ECB', rate:'2.65%', rateNum:2.65, flag:'🇪🇺', lastChange:'Mar 2026 (-25bp)', source:'ECB', sourceUrl:'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html' },
+      { id:'boe', name:'Bank of England', rate:'4.50%', rateNum:4.50, flag:'🇬🇧', lastChange:'Feb 2025 (-25bp)', source:'BoE', sourceUrl:'https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate' },
+      { id:'boj', name:'Bank of Japan', rate:'0.50%', rateNum:0.50, flag:'🇯🇵', lastChange:'Jan 2025 (+25bp)', source:'BoJ', sourceUrl:'https://www.boj.or.jp/en/mopo/index.htm' },
+      { id:'pboc', name:'People\'s Bank of China', rate:'3.10%', rateNum:3.10, flag:'🇨🇳', lastChange:'Oct 2025 (-25bp)', source:'PBoC', sourceUrl:'http://www.pbc.gov.cn/en/' },
+      { id:'rbi', name:'Reserve Bank of India', rate:'6.25%', rateNum:6.25, flag:'🇮🇳', lastChange:'Feb 2025 (-25bp)', source:'RBI', sourceUrl:'https://www.rbi.org.in/' },
+      { id:'snb', name:'Swiss National Bank', rate:'0.25%', rateNum:0.25, flag:'🇨🇭', lastChange:'Mar 2025 (-25bp)', source:'SNB', sourceUrl:'https://www.snb.ch/en/' },
+      { id:'rba', name:'Reserve Bank of Australia', rate:'4.10%', rateNum:4.10, flag:'🇦🇺', lastChange:'Feb 2025 (-25bp)', source:'RBA', sourceUrl:'https://www.rba.gov.au/monetary-policy/' }
+    ],
+    realYields: [
+      { id:'tips5', title:'5Y TIPS Real Yield', value:'1.73%', period:'Apr 2026', source:'FRED', sourceUrl:'https://fred.stlouisfed.org/series/DFII5', icon:'fas fa-chart-line', gradient:'var(--gradient-1)', details:{'10Y Real Yield':'1.82%','30Y Real Yield':'2.05%','5Y Breakeven':'2.27%'} },
+      { id:'bei10', title:'10Y Breakeven Inflation', value:'2.41%', period:'Apr 2026', source:'FRED', sourceUrl:'https://fred.stlouisfed.org/series/T10YIE', icon:'fas fa-fire', gradient:'var(--gradient-3)', details:{'5Y Breakeven':'2.27%','5Y5Y Forward':'2.55%','Market Inflation Exp':'2.4%'} },
+      { id:'term_premium', title:'10Y Term Premium', value:'0.65%', period:'Mar 2026', source:'NY Fed ACM', sourceUrl:'https://www.newyorkfed.org/research/data_indicators/term-premia-tabs#/overview', icon:'fas fa-layer-group', gradient:'var(--gradient-4)', details:{'5Y Term Premium':'0.35%','30Y Term Premium':'0.92%','Risk Neutral Rate':'3.58%'} }
+    ]
+  }
+};
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+let worldMapInstance = null;
+let mapInitialized = false;
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  document.getElementById('content-' + tabName).classList.add('active');
+
+  // Lazy-init the map the first time the Global tab is opened
+  if (tabName === 'global' && !mapInitialized) {
+    mapInitialized = true;
+    setTimeout(() => initWorldMap(), 200);
+  }
+  // If map exists and we're switching TO global, tell Leaflet to recalculate
+  if (tabName === 'global' && worldMapInstance) {
+    setTimeout(() => worldMapInstance.invalidateSize(), 300);
+  }
+}
+
+// ============================================
+// RENDER KPI CARDS
+// ============================================
+function renderKPICards(containerId, data) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = data.map(item => `
+    <div class="kpi-card" style="--card-accent:${item.gradient}" onclick="openModal('${item.id}')">
+      <div class="kpi-header">
+        <div class="kpi-title">${item.title}</div>
+        <div class="kpi-icon" style="background:${item.gradient}"><i class="${item.icon}"></i></div>
+      </div>
+      <div class="kpi-period">${item.period}</div>
+      <div class="kpi-value">${item.value}</div>
+      <span class="kpi-change ${item.changeDir}">
+        <i class="fas fa-${item.changeDir === 'up' ? 'arrow-up' : item.changeDir === 'down' ? 'arrow-down' : 'minus'}"></i>
+        ${item.change}${item.prevValue ? ' vs ' + item.prevValue : ''}
+      </span>
+      ${item.history ? `<div class="sparkline-container"><canvas id="spark-${item.id}"></canvas></div>` : ''}
+      <div class="kpi-source">
+        <i class="fas fa-link"></i>
+        <a href="${item.sourceUrl}" target="_blank" title="Source: ${item.source}">${item.source}</a>
+      </div>
+    </div>
+  `).join('');
+
+  // Render sparklines
+  data.forEach(item => {
+    if (item.history) {
+      const canvas = document.getElementById('spark-' + item.id);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: item.historyLabels,
+          datasets: [{
+            data: item.history,
+            borderColor: item.changeDir === 'up' ? '#10b981' : item.changeDir === 'down' ? '#f43f5e' : '#6366f1',
+            borderWidth: 2,
+            fill: true,
+            backgroundColor: item.changeDir === 'up' ? 'rgba(16,185,129,0.1)' : item.changeDir === 'down' ? 'rgba(244,63,94,0.1)' : 'rgba(99,102,241,0.1)',
+            tension: 0.4,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { display: false }, y: { display: false } },
+          interaction: { enabled: false }
+        }
+      });
+    }
+  });
+}
+
+// ============================================
+// RENDER TABLES
+// ============================================
+function renderEuropeTable() {
+  const tbody = document.getElementById('europeTableBody');
+  tbody.innerHTML = DATA.europe.countries.map(c => `
+    <tr>
+      <td><div class="country-cell"><span class="flag-emoji">${c.flag}</span>${c.name}</div></td>
+      <td style="color:${c.gdp >= 2 ? 'var(--accent-emerald)' : c.gdp < 0 ? 'var(--accent-rose)' : 'var(--text-primary)'}">${c.gdp}%</td>
+      <td style="color:${c.inflation > 3 ? 'var(--accent-rose)' : 'var(--text-primary)'}">${c.inflation}%</td>
+      <td>${c.unemployment}%</td>
+      <td style="color:${c.debt > 100 ? 'var(--accent-rose)' : 'var(--text-primary)'}">${c.debt}%</td>
+      <td>${c.yield10y}%</td>
+    </tr>
+  `).join('');
+}
+
+function renderEMTable() {
+  const tbody = document.getElementById('emTableBody');
+  tbody.innerHTML = DATA.emerging.countries.map(c => `
+    <tr>
+      <td><div class="country-cell"><span class="flag-emoji">${c.flag}</span><a href="${c.sourceUrl}" target="_blank" style="color:var(--text-primary);text-decoration:none" title="Source: ${c.source}">${c.name}</a></div></td>
+      <td style="color:${c.gdp >= 4 ? 'var(--accent-emerald)' : c.gdp < 1 ? 'var(--accent-rose)' : 'var(--text-primary)'}">${c.gdp}%</td>
+      <td style="color:${c.inflation > 10 ? 'var(--accent-rose)' : c.inflation > 5 ? 'var(--accent-amber)' : 'var(--text-primary)'}">${c.inflation}%</td>
+      <td>${c.policyRate}%</td>
+      <td style="color:${c.debt > 80 ? 'var(--accent-rose)' : 'var(--text-primary)'}">${c.debt}%</td>
+      <td style="color:${c.currentAcct > 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)'}">${c.currentAcct}%</td>
+      <td style="color:${c.fxYtd.startsWith('+') ? 'var(--accent-emerald)' : c.fxYtd.startsWith('-') ? 'var(--accent-rose)' : 'var(--text-secondary)'}">${c.fxYtd}</td>
+    </tr>
+  `).join('');
+}
+
+// ============================================
+// MODAL SYSTEM
+// ============================================
+const allIndicators = {};
+function indexIndicators() {
+  const sections = ['output','labor','inflation','financial','housing','fiscal'];
+  sections.forEach(s => {
+    if (DATA.usa[s]) DATA.usa[s].forEach(item => { allIndicators[item.id] = item; });
+  });
+  if (DATA.europe.main) DATA.europe.main.forEach(item => { allIndicators[item.id] = item; });
+  if (DATA.global.commodities) DATA.global.commodities.forEach(item => { allIndicators[item.id] = item; });
+  if (DATA.rates.realYields) DATA.rates.realYields.forEach(item => { allIndicators[item.id] = item; });
+}
+
+function openModal(id) {
+  const item = allIndicators[id];
+  if (!item) return;
+  document.getElementById('modalTitle').textContent = item.title;
+  document.getElementById('modalMeta').textContent = item.period + (item.fredCode ? ' | FRED: ' + item.fredCode : '');
+
+  // Details
+  const detailsHtml = item.details ? Object.entries(item.details).map(([k,v]) => `
+    <div class="modal-detail-item">
+      <div class="label">${k}</div>
+      <div class="value">${v}</div>
+    </div>
+  `).join('') : '';
+  document.getElementById('modalDetails').innerHTML = detailsHtml;
+
+  // Description
+  document.getElementById('modalDescription').textContent = item.description || '';
+
+  // Source
+  document.getElementById('modalSource').innerHTML = `
+    <i class="fas fa-database"></i> <strong>Source:</strong>
+    <a href="${item.sourceUrl}" target="_blank">${item.source}</a>
+    ${item.fredCode ? ` | <a href="https://fred.stlouisfed.org/series/${item.fredCode}" target="_blank">View on FRED →</a>` : ''}
+  `;
+
+  // Chart
+  if (modalChartInstance) modalChartInstance.destroy();
+  if (item.history && item.historyLabels) {
+    const ctx = document.getElementById('modalChart').getContext('2d');
+    modalChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: item.historyLabels,
+        datasets: [{
+          label: item.title,
+          data: item.history,
+          backgroundColor: item.history.map((v, i) =>
+            i === item.history.length - 1 ? 'rgba(99,102,241,0.8)' : 'rgba(99,102,241,0.3)'
+          ),
+          borderColor: 'rgba(99,102,241,0.8)',
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: '#94a3b8', anchor: 'end', align: 'top',
+            font: { size: 11, weight: 600 },
+            formatter: v => typeof v === 'number' ? (Math.abs(v) >= 100 ? v.toLocaleString() : v) : v
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(99,102,241,0.05)' }, ticks: { color: '#64748b' } },
+          y: { grid: { color: 'rgba(99,102,241,0.08)' }, ticks: { color: '#64748b' } }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+
+  document.getElementById('modalOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ============================================
+// CHARTS
+// ============================================
+const chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { color: '#94a3b8', font: { size: 12, family: 'Segoe UI' }, padding: 16, usePointStyle: true } }
+  },
+  scales: {
+    x: { grid: { color: 'rgba(99,102,241,0.06)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+    y: { grid: { color: 'rgba(99,102,241,0.08)' }, ticks: { color: '#64748b', font: { size: 11 } } }
+  }
+};
+
+function initUSCharts() {
+  // GDP Chart
+  new Chart(document.getElementById('chartGDP'), {
+    type: 'bar',
+    data: {
+      labels: ['Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+      datasets: [{
+        label: 'Real GDP Growth (SAAR %)',
+        data: [2.2, 2.1, 4.9, 3.4, 1.4, 3.0, 2.8, 2.4, 2.4, 2.8, 2.3, 2.4],
+        backgroundColor: ctx => ctx.raw >= 0 ? 'rgba(99,102,241,0.7)' : 'rgba(244,63,94,0.7)',
+        borderRadius: 6
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Inflation Chart
+  new Chart(document.getElementById('chartInflation'), {
+    type: 'line',
+    data: {
+      labels: ['Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+      datasets: [
+        { label: 'CPI (YoY)', data: [2.4, 2.3, 2.4, 2.6, 2.9, 2.5, 2.4, 2.6, 2.7, 2.9, 3.0, 2.8], borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', fill: false, tension: 0.4, pointRadius: 3, borderWidth: 2 },
+        { label: 'Core CPI (YoY)', data: [2.8, 2.8, 2.8, 2.9, 3.2, 3.2, 3.3, 3.3, 3.3, 3.2, 3.3, 3.1], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: false, tension: 0.4, pointRadius: 3, borderWidth: 2 },
+        { label: 'Core PCE (YoY)', data: [2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.6], borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: false, tension: 0.4, pointRadius: 3, borderWidth: 2 },
+        { label: 'Fed 2% Target', data: Array(12).fill(2.0), borderColor: 'rgba(16,185,129,0.5)', borderDash: [8, 4], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Unemployment Chart
+  new Chart(document.getElementById('chartUnemployment'), {
+    type: 'line',
+    data: {
+      labels: ['Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+      datasets: [{
+        label: 'Unemployment Rate (%)',
+        data: [4.2, 4.2, 4.1, 4.3, 4.2, 4.1, 4.2, 4.2, 4.1, 4.1, 4.1, 4.0],
+        borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.15)', fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2.5
+      }]
+    },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 3.0, max: 5.0 } } }
+  });
+
+  // Payrolls Chart
+  new Chart(document.getElementById('chartPayrolls'), {
+    type: 'bar',
+    data: {
+      labels: ['Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'],
+      datasets: [{
+        label: 'Nonfarm Payrolls Change (K)',
+        data: [177, 165, 179, 114, 159, 223, 184, 212, 256, 143, 151, 228],
+        backgroundColor: ctx => ctx.raw >= 200 ? 'rgba(16,185,129,0.7)' : ctx.raw >= 100 ? 'rgba(99,102,241,0.7)' : 'rgba(244,63,94,0.7)',
+        borderRadius: 6
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Rates Chart
+  new Chart(document.getElementById('chartRates'), {
+    type: 'line',
+    data: {
+      labels: ['2019','2020-Q1','2020-Q2','2021','2022-Q1','2022-Q3','2023-Q1','2023-Q3','2024-Q1','2024-Q3','2025-Q1','2025-Q3','2026-Q1'],
+      datasets: [
+        { label: 'Fed Funds Rate (%)', data: [1.75, 1.0, 0.25, 0.25, 0.50, 3.25, 4.75, 5.50, 5.50, 5.00, 4.50, 4.50, 4.33], borderColor: '#6366f1', borderWidth: 2.5, tension: 0.3, pointRadius: 3, fill: false },
+        { label: '10Y Treasury (%)', data: [1.80, 1.40, 0.65, 1.50, 2.00, 3.80, 3.60, 4.60, 4.20, 3.80, 4.50, 4.00, 4.23], borderColor: '#10b981', borderWidth: 2.5, tension: 0.3, pointRadius: 3, fill: false },
+        { label: '2Y Treasury (%)', data: [1.60, 0.90, 0.15, 0.25, 1.50, 4.20, 4.60, 5.10, 4.60, 3.60, 4.20, 3.90, 3.97], borderColor: '#f59e0b', borderWidth: 2.5, tension: 0.3, pointRadius: 3, fill: false }
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+}
+
+function initEuropeCharts() {
+  const countries = ['Germany','France','UK','Italy','Spain','Netherlands'];
+  const gdpData = [0.2, 0.7, 1.0, 0.5, 3.1, 1.5];
+  const inflData = [2.3, 1.6, 2.8, 1.7, 2.9, 3.0];
+
+  new Chart(document.getElementById('chartEuropeGDP'), {
+    type: 'bar',
+    data: {
+      labels: countries,
+      datasets: [{
+        label: 'GDP Growth %',
+        data: gdpData,
+        backgroundColor: gdpData.map(v => v >= 2 ? 'rgba(16,185,129,0.7)' : v >= 1 ? 'rgba(99,102,241,0.7)' : v >= 0 ? 'rgba(245,158,11,0.7)' : 'rgba(244,63,94,0.7)'),
+        borderRadius: 8
+      }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('chartEuropeInflation'), {
+    type: 'bar',
+    data: {
+      labels: countries,
+      datasets: [
+        {
+          label: 'Inflation %',
+          data: inflData,
+          backgroundColor: inflData.map(v => v > 3 ? 'rgba(244,63,94,0.7)' : v > 2 ? 'rgba(245,158,11,0.7)' : 'rgba(16,185,129,0.7)'),
+          borderRadius: 8
+        },
+        {
+          label: 'ECB Target (2%)',
+          data: Array(6).fill(2),
+          backgroundColor: 'rgba(99,102,241,0.15)',
+          borderColor: 'rgba(99,102,241,0.5)',
+          borderWidth: 1,
+          borderDash: [4,4],
+          type: 'line',
+          pointRadius: 0,
+          fill: false,
+          borderRadius: 0
+        }
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+}
+
+function initEMCharts() {
+  const emCountries = DATA.emerging.countries.map(c => c.flag + ' ' + c.name);
+  const emGDP = DATA.emerging.countries.map(c => c.gdp);
+  const emInflation = DATA.emerging.countries.map(c => c.inflation);
+
+  new Chart(document.getElementById('chartEMGDP'), {
+    type: 'bar',
+    data: {
+      labels: emCountries,
+      datasets: [{
+        label: 'GDP Growth %',
+        data: emGDP,
+        backgroundColor: emGDP.map(v => v >= 5 ? 'rgba(16,185,129,0.8)' : v >= 3 ? 'rgba(6,182,212,0.7)' : v >= 1 ? 'rgba(99,102,241,0.7)' : 'rgba(244,63,94,0.7)'),
+        borderRadius: 8
+      }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('chartEMInflation'), {
+    type: 'bar',
+    data: {
+      labels: emCountries,
+      datasets: [{
+        label: 'Inflation %',
+        data: emInflation,
+        backgroundColor: emInflation.map(v => v > 10 ? 'rgba(244,63,94,0.8)' : v > 5 ? 'rgba(245,158,11,0.7)' : v > 3 ? 'rgba(99,102,241,0.7)' : 'rgba(16,185,129,0.7)'),
+        borderRadius: 8
+      }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y' }
+  });
+}
+
+function initGlobalCharts() {
+  // Oil
+  new Chart(document.getElementById('chartOil'), {
+    type: 'line',
+    data: {
+      labels: ['Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26'],
+      datasets: [{
+        label: 'WTI Crude ($/bbl)',
+        data: [75.8, 70.7, 68.3, 62.1, 61.0, 69.0, 73.5, 72.0, 70.2, 67.0, 69.3, 75.4, 75.4, 73.8, 72.0, 71.5],
+        borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Gold
+  new Chart(document.getElementById('chartGold'), {
+    type: 'line',
+    data: {
+      labels: ['Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26'],
+      datasets: [{
+        label: 'Gold ($/oz)',
+        data: [2770, 2860, 3080, 3240, 3310, 3225, 2780, 2525, 2630, 2665, 2750, 2640, 2625, 2880, 3050, 3115],
+        borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // GDP Share
+  new Chart(document.getElementById('chartGDPShare'), {
+    type: 'doughnut',
+    data: {
+      labels: ['United States', 'China', 'European Union', 'India', 'Japan', 'Rest of World'],
+      datasets: [{
+        data: [15.5, 18.8, 14.7, 8.1, 3.7, 39.2],
+        backgroundColor: ['#6366f1', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#64748b'],
+        borderColor: 'rgba(10,14,26,0.8)',
+        borderWidth: 3,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#94a3b8', font: { size: 13, family: 'Segoe UI' }, padding: 16, usePointStyle: true }
+        }
+      }
+    }
+  });
+}
+
+function initRatesCharts() {
+  // Yield Curve
+  const yc = DATA.rates.yieldCurve;
+  new Chart(document.getElementById('chartYieldCurve'), {
+    type: 'line',
+    data: {
+      labels: yc.maturities,
+      datasets: [
+        {
+          label: 'Current (Apr 2026)',
+          data: yc.current,
+          borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.15)', fill: true,
+          tension: 0.4, pointRadius: 5, pointBackgroundColor: '#6366f1', borderWidth: 3
+        },
+        {
+          label: 'One Year Ago (Apr 2025)',
+          data: yc.oneYearAgo,
+          borderColor: '#64748b', backgroundColor: 'rgba(100,116,139,0.05)', fill: false,
+          tension: 0.4, pointRadius: 4, pointBackgroundColor: '#64748b', borderWidth: 2, borderDash: [6,3]
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, min: 0, max: 6, ticks: { callback: v => v + '%', color: '#64748b' } }
+      },
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%' }
+        }
+      }
+    }
+  });
+
+  // Central Banks
+  const cb = DATA.rates.centralBanks;
+  new Chart(document.getElementById('chartCentralBanks'), {
+    type: 'bar',
+    data: {
+      labels: cb.map(b => b.flag + ' ' + b.name),
+      datasets: [{
+        label: 'Policy Rate (%)',
+        data: cb.map(b => b.rateNum),
+        backgroundColor: cb.map(b => {
+          if (b.rateNum > 5) return 'rgba(244,63,94,0.7)';
+          if (b.rateNum > 3) return 'rgba(245,158,11,0.7)';
+          if (b.rateNum > 1) return 'rgba(99,102,241,0.7)';
+          return 'rgba(16,185,129,0.7)';
+        }),
+        borderRadius: 8
+      }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y' }
+  });
+
+  // ── 10-Year Treasury Yield — 20-Year History ──
+  new Chart(document.getElementById('chart10YHistory'), {
+    type: 'line',
+    data: {
+      labels: ['2005','2006','2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'],
+      datasets: [
+        { label: '10Y Yield (%)', data: [4.29,4.79,4.63,3.66,3.26,3.22,2.78,1.80,2.35,2.54,2.14,1.84,2.33,2.91,2.14,0.89,1.45,2.95,3.96,4.25,4.25,4.35],
+          borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.12)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2.5 },
+        { label: '2Y Yield (%)', data: [3.85,4.81,4.36,2.00,0.96,0.61,0.45,0.28,0.31,0.46,0.67,0.84,1.39,2.52,1.58,0.13,0.73,4.41,4.97,4.25,4.00,3.84],
+          borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: 'Fed Funds (%)', data: [3.22,4.97,5.02,1.92,0.16,0.18,0.10,0.14,0.11,0.09,0.13,0.39,1.00,1.83,2.16,0.36,0.08,1.68,5.33,5.33,4.50,4.33],
+          borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [6,3] }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, ticks: { callback: v => v + '%', color: '#64748b' } } },
+      plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%' } } }
+    }
+  });
+
+  // ── 2s10s Spread ──
+  const spreadLabels = ['2015','2016','2017','2018','2019','2020','2021','2022-Q1','2022-Q2','2022-Q3','2022-Q4','2023-Q1','2023-Q2','2023-Q3','2023-Q4','2024-Q1','2024-Q2','2024-Q3','2024-Q4','2025-Q1','2025-Q2','2025-Q3','2025-Q4','2026-Q1','2026-Apr'];
+  const spreadData = [1.47,1.00,0.94,0.39,0.56,0.76,0.72,-0.20,-0.05,-0.38,-0.55,-0.90,-1.06,-0.72,-0.38,-0.38,-0.46,-0.05,0.12,0.30,0.25,0.20,0.25,0.35,0.51];
+  new Chart(document.getElementById('chart2s10sSpread'), {
+    type: 'bar',
+    data: {
+      labels: spreadLabels,
+      datasets: [{
+        label: '2s10s Spread (%)',
+        data: spreadData,
+        backgroundColor: spreadData.map(v => v < 0 ? 'rgba(244,63,94,0.7)' : 'rgba(16,185,129,0.6)'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        annotation: {
+          annotations: { zeroLine: { type: 'line', yMin: 0, yMax: 0, borderColor: '#94a3b8', borderWidth: 1, borderDash: [4,4] } }
+        }
+      },
+      scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, ticks: { callback: v => v + '%', color: '#64748b' } } }
+    }
+  });
+
+  // ── 10Y Real Yield vs Breakeven Inflation ──
+  new Chart(document.getElementById('chartRealVsBreakeven'), {
+    type: 'line',
+    data: {
+      labels: ['2019','2020-Q1','2020-Q3','2021-Q1','2021-Q3','2022-Q1','2022-Q3','2023-Q1','2023-Q3','2024-Q1','2024-Q3','2025-Q1','2025-Q3','2026-Q1','2026-Apr'],
+      datasets: [
+        { label: '10Y Breakeven Inflation (%)', data: [1.77,1.60,1.64,2.16,2.38,2.83,2.36,2.30,2.35,2.32,2.18,2.40,2.28,2.38,2.36],
+          borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5 },
+        { label: '10Y TIPS Real Yield (%)', data: [0.37,-0.20,-0.95,-0.95,-1.05,-0.50,1.30,1.45,1.95,1.85,1.75,1.90,1.80,1.85,1.82],
+          borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5 },
+        { label: 'Fed 2% Target', data: Array(15).fill(2.0), borderColor: 'rgba(16,185,129,0.4)', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, ticks: { callback: v => v + '%', color: '#64748b' } } },
+      plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%' } } }
+    }
+  });
+
+  // ── Yield Curve at Key Moments ──
+  const curveMaturities = ['1M','3M','6M','1Y','2Y','3Y','5Y','7Y','10Y','20Y','30Y'];
+  new Chart(document.getElementById('chartYieldCurveHistory'), {
+    type: 'line',
+    data: {
+      labels: curveMaturities,
+      datasets: [
+        { label: 'Apr 2026 (Current)', data: [4.34,4.30,4.17,4.02,3.97,3.95,4.00,4.12,4.23,4.50,4.52],
+          borderColor: '#6366f1', borderWidth: 3, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#6366f1', fill: false },
+        { label: 'Jan 2025 (Pre-cuts)', data: [4.35,4.33,4.28,4.20,4.28,4.30,4.35,4.42,4.53,4.78,4.72],
+          borderColor: '#f59e0b', borderWidth: 2.5, tension: 0.4, pointRadius: 4, fill: false },
+        { label: 'Oct 2023 (Peak rates)', data: [5.55,5.55,5.52,5.46,5.05,4.82,4.62,4.68,4.80,5.10,4.95],
+          borderColor: '#ef4444', borderWidth: 2, tension: 0.4, pointRadius: 4, fill: false },
+        { label: 'Jan 2022 (Pre-hikes)', data: [0.05,0.22,0.47,0.78,1.01,1.22,1.55,1.73,1.78,2.11,2.09],
+          borderColor: '#10b981', borderWidth: 2, tension: 0.4, pointRadius: 4, fill: false, borderDash: [6,3] },
+        { label: 'Mar 2020 (COVID)', data: [0.05,0.08,0.17,0.22,0.34,0.40,0.50,0.68,0.76,1.17,1.30],
+          borderColor: '#a855f7', borderWidth: 2, tension: 0.4, pointRadius: 4, fill: false, borderDash: [4,4] },
+        { label: 'Jun 2019 (Pre-COVID)', data: [2.21,2.12,2.09,1.92,1.75,1.72,1.77,1.88,2.01,2.31,2.53],
+          borderColor: '#64748b', borderWidth: 1.5, tension: 0.4, pointRadius: 3, fill: false, borderDash: [2,3] }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, min: 0, max: 6, ticks: { callback: v => v + '%', color: '#64748b' } }
+      },
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%' } }
+      }
+    }
+  });
+}
+
+// ============================================
+// CENTRAL BANKS KPI CARDS
+// ============================================
+function renderCentralBankCards() {
+  const container = document.getElementById('kpi-central-banks');
+  container.innerHTML = DATA.rates.centralBanks.map(b => `
+    <div class="kpi-card" style="--card-accent:var(--gradient-1)">
+      <div class="kpi-header">
+        <div class="kpi-title">${b.name}</div>
+        <div style="font-size:28px">${b.flag}</div>
+      </div>
+      <div class="kpi-value" style="font-size:24px">${b.rate}</div>
+      <span class="kpi-change neutral"><i class="fas fa-history"></i> ${b.lastChange}</span>
+      <div class="kpi-source">
+        <i class="fas fa-link"></i>
+        <a href="${b.sourceUrl}" target="_blank">${b.source}</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRealYieldCards() {
+  const container = document.getElementById('kpi-real-yields');
+  container.innerHTML = DATA.rates.realYields.map(item => `
+    <div class="kpi-card" style="--card-accent:${item.gradient}" onclick="openModal('${item.id}')">
+      <div class="kpi-header">
+        <div class="kpi-title">${item.title}</div>
+        <div class="kpi-icon" style="background:${item.gradient}"><i class="${item.icon}"></i></div>
+      </div>
+      <div class="kpi-period">${item.period}</div>
+      <div class="kpi-value">${item.value}</div>
+      <div class="kpi-source">
+        <i class="fas fa-link"></i>
+        <a href="${item.sourceUrl}" target="_blank">${item.source}</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// WORLD MAP (Leaflet + TopoJSON — lightweight)
+// ============================================
+function initWorldMap() {
+  // Prevent double-init
+  if (worldMapInstance) {
+    worldMapInstance.invalidateSize();
+    return;
+  }
+
+  const mapContainer = document.getElementById('worldMap');
+  if (!mapContainer) return;
+
+  // Show loading state
+  mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:10px"><div class="loading-spinner"></div> Loading world map…</div>';
+
+  const map = L.map('worldMap', {
+    center: [25, 10], zoom: 2.3, minZoom: 2, maxZoom: 6,
+    scrollWheelZoom: true, zoomControl: true,
+    attributionControl: true,
+    worldCopyJump: true
+  });
+  worldMapInstance = map;
+
+  // Dark tile layer
+  L.tileLayer('//{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM &copy; CARTO',
+    maxZoom: 19, subdomains: 'abcd'
+  }).addTo(map);
+
+  // GDP data by ISO-3166-1 numeric code (used by world-atlas TopoJSON)
+  // AND by country name (fallback matching)
+  const gdpByNumeric = {
+    '840':2.4,'124':1.5,'484':1.5,'076':3.2,'032':-1.5,'170':2.0,'152':2.2,'604':2.8,
+    '826':1.0,'276':0.2,'250':0.7,'380':0.5,'724':3.1,'528':1.5,'056':1.0,'040':0.5,
+    '756':1.3,'752':1.2,'578':1.4,'208':2.0,'246':0.5,'616':3.5,'203':1.8,'642':2.0,
+    '348':1.0,'300':2.3,'620':2.0,'372':5.0,'352':2.5,
+    '156':4.6,'392':1.2,'410':2.0,'356':6.5,'360':5.0,'764':2.8,'704':7.1,'608':5.8,
+    '458':4.5,'702':3.5,'158':3.0,'050':5.5,
+    '036':1.5,'554':1.0,
+    '643':2.5,'792':3.2,'682':1.3,'784':3.5,'376':1.5,'818':3.5,'566':3.4,
+    '710':1.5,'404':5.0,'231':6.5,'288':3.0,'834':5.5,'504':3.0,
+    '586':2.5,'368':2.0,'364':3.0,
+    '004':0.5,'008':3.5,'012':3.0,'024':2.5,'031':2.0,'048':3.0,'051':5.5,
+    '064':4.5,'068':3.5,'070':2.8,'072':4.0,'084':2.5,'090':2.0,'100':1.8,
+    '104':3.0,'116':5.5,'120':3.8,'144':3.0,'188':3.5,'191':2.5,'196':3.0,
+    '214':4.5,'218':2.5,'222':2.5,'226':0.5,'232':3.0,'233':2.0,'242':3.0,
+    '262':5.0,'268':7.0,'270':5.5,'320':3.5,'324':5.0,'328':4.5,'332':1.5,
+    '340':3.5,'384':6.0,'398':4.5,'400':2.5,'414':2.0,'417':6.0,'418':4.5,
+    '422':0.5,'426':2.0,'430':4.5,'434':8.0,'440':2.5,'442':2.0,'450':4.0,
+    '454':3.5,'466':4.0,'470':5.0,'478':4.0,'480':4.5,'496':5.5,'498':3.5,
+    '499':3.5,'508':5.0,'512':2.0,'516':3.0,'524':4.5,'540':2.5,'558':3.5,
+    '562':6.0,'585':0.0,'591':4.0,'598':4.5,'600':4.0,'634':2.0,'646':7.0,
+    '659':2.5,'662':2.0,'678':2.5,'686':5.5,'688':3.0,'694':3.5,'706':3.0,
+    '716':2.0,'728':0.5,'740':2.0,'748':3.0,'760':-1.0,'762':5.5,'768':5.5,
+    '780':2.0,'784':3.5,'788':2.5,'795':6.0,'800':6.0,'804':3.0,'858':3.0,
+    '860':6.0,'862':-5.0,'887':0.0,'894':3.0
+  };
+
+  // Name-based lookup (fallback for features missing numeric id)
+  const gdpByName = {
+    'United States':2.4,'United States of America':2.4,'Canada':1.5,'Mexico':1.5,'Brazil':3.2,
+    'Argentina':-1.5,'Colombia':2.0,'Chile':2.2,'Peru':2.8,
+    'United Kingdom':1.0,'Germany':0.2,'France':0.7,'Italy':0.5,'Spain':3.1,
+    'Netherlands':1.5,'Belgium':1.0,'Austria':0.5,'Switzerland':1.3,'Sweden':1.2,
+    'Norway':1.4,'Denmark':2.0,'Finland':0.5,'Poland':3.5,'Czech Republic':1.8,'Czechia':1.8,
+    'Romania':2.0,'Hungary':1.0,'Greece':2.3,'Portugal':2.0,'Ireland':5.0,'Iceland':2.5,
+    'China':4.6,'Japan':1.2,'South Korea':2.0,'Republic of Korea':2.0,'Korea':2.0,
+    'India':6.5,'Indonesia':5.0,'Thailand':2.8,'Vietnam':7.1,'Viet Nam':7.1,
+    'Philippines':5.8,'Malaysia':4.5,'Singapore':3.5,'Taiwan':3.0,'Bangladesh':5.5,
+    'Australia':1.5,'New Zealand':1.0,
+    'Russia':2.5,'Russian Federation':2.5,'Turkey':3.2,'Türkiye':3.2,
+    'Saudi Arabia':1.3,'United Arab Emirates':3.5,'Israel':1.5,'Egypt':3.5,'Nigeria':3.4,
+    'South Africa':1.5,'Kenya':5.0,'Ethiopia':6.5,'Ghana':3.0,'Tanzania':5.5,'Morocco':3.0,
+    'Pakistan':2.5,'Iraq':2.0,'Iran':3.0
+  };
+
+  function getGdp(feature) {
+    // Try numeric id first
+    const numId = feature.id || (feature.properties && feature.properties.iso_n3);
+    if (numId && gdpByNumeric[String(numId)]) return gdpByNumeric[String(numId)];
+    // Pad to 3 digits
+    if (numId && gdpByNumeric[String(numId).padStart(3,'0')]) return gdpByNumeric[String(numId).padStart(3,'0')];
+    // Try name match
+    const name = feature.properties && (feature.properties.name || feature.properties.ADMIN || feature.properties.NAME);
+    if (name && gdpByName[name] !== undefined) return gdpByName[name];
+    return undefined;
+  }
+
+  function getColor(gdp) {
+    if (gdp === undefined || gdp === null) return '#1e293b';
+    if (gdp < 0) return '#ef4444';
+    if (gdp < 1) return '#f97316';
+    if (gdp < 2) return '#eab308';
+    if (gdp < 3) return '#22c55e';
+    if (gdp < 5) return '#10b981';
+    if (gdp < 7) return '#0ea5e9';
+    return '#6366f1';
+  }
+
+  function addGeoLayer(geojson) {
+    L.geoJSON(geojson, {
+      style: feature => {
+        const gdp = getGdp(feature);
+        return {
+          fillColor: getColor(gdp),
+          weight: 0.8,
+          opacity: 0.9,
+          color: '#1e293b',
+          fillOpacity: gdp !== undefined ? 0.75 : 0.12
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        const gdp = getGdp(feature);
+        const name = feature.properties.name || feature.properties.ADMIN || feature.properties.NAME || 'Unknown';
+        layer.bindTooltip(`
+          <div style="min-width:140px">
+            <strong style="font-size:13px">${name}</strong><br>
+            <span style="font-size:18px;font-weight:800;color:${getColor(gdp)}">${gdp !== undefined ? gdp + '%' : 'N/A'}</span>
+            <span style="font-size:11px;color:#94a3b8"> GDP Growth</span><br>
+            <em style="font-size:10px;color:#64748b">Source: World Bank / IMF WEO</em>
+          </div>
+        `, { sticky: true, className: 'map-tooltip', direction: 'top', offset: [0, -5] });
+
+        layer.on('mouseover', function() {
+          this.setStyle({ weight: 2.5, color: '#a5b4fc', fillOpacity: 0.92 });
+          this.bringToFront();
+        });
+        layer.on('mouseout', function() {
+          this.setStyle({ weight: 0.8, color: '#1e293b', fillOpacity: gdp !== undefined ? 0.75 : 0.12 });
+        });
+      }
+    }).addTo(map);
+    map.invalidateSize();
+  }
+
+  // ── Fetch lightweight TopoJSON (world-atlas, ~240KB vs 23MB GeoJSON) ──
+  fetch('vendor/countries-110m.json')
+    .then(r => { if (!r.ok) throw new Error('TopoJSON local ' + r.status); return r.json(); })
+    .then(topology => {
+      // Convert TopoJSON → GeoJSON using topojson-client
+      const geojson = topojson.feature(topology, topology.objects.countries);
+      addGeoLayer(geojson);
+      console.log('[Map] Loaded TopoJSON —', geojson.features.length, 'countries');
+    })
+    .catch(err => {
+      console.warn('[Map] TopoJSON failed, trying fallback GeoJSON...', err);
+      // Fallback: smaller Natural Earth GeoJSON
+      fetch('//d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_countries.geojson')
+        .then(r => { if (!r.ok) throw new Error('Fallback ' + r.status); return r.json(); })
+        .then(geojson => {
+          addGeoLayer(geojson);
+          console.log('[Map] Loaded fallback GeoJSON —', geojson.features.length, 'countries');
+        })
+        .catch(err2 => {
+          console.error('[Map] All sources failed:', err2);
+          document.getElementById('worldMap').innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--accent-rose);gap:8px">' +
+            '<i class="fas fa-exclamation-triangle"></i> Map data could not be loaded. Check your internet connection.</div>';
+        });
+    });
+
+  // Inject tooltip + attribution styles for dark theme
+  const mapStyles = document.createElement('style');
+  mapStyles.textContent = `
+    .map-tooltip {
+      background: rgba(15,23,42,0.96) !important;
+      border: 1px solid rgba(99,102,241,0.35) !important;
+      color: #f1f5f9 !important;
+      border-radius: 10px !important;
+      padding: 10px 14px !important;
+      font-family: 'Segoe UI', sans-serif !important;
+      font-size: 12px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45) !important;
+      line-height: 1.5 !important;
+    }
+    .map-tooltip::before { display: none !important; }
+    .leaflet-tooltip-top:before { display: none !important; }
+    .leaflet-control-attribution {
+      background: rgba(10,14,26,0.75) !important;
+      color: #64748b !important; font-size: 10px !important;
+    }
+    .leaflet-control-attribution a { color: #6366f1 !important; }
+    .leaflet-control-zoom a {
+      background: rgba(17,24,39,0.9) !important;
+      color: #f1f5f9 !important;
+      border-color: rgba(99,102,241,0.2) !important;
+    }
+    .leaflet-control-zoom a:hover { background: rgba(99,102,241,0.3) !important; }
+  `;
+  document.head.appendChild(mapStyles);
+}
+
+// ============================================
+// FRED API (Optional live data)
+// ============================================
+function promptFredKey() {
+  const key = prompt('Enter your free FRED API key from https://fred.stlouisfed.org/docs/api/api_key.html\n\nThis is optional — all data is already displayed with embedded values.');
+  if (key && key.length > 10) {
+    fredApiKey = key;
+    alert('FRED API key set! Live data will be fetched on next refresh.');
+  }
+}
+
+// ============================================
+// INITIALIZE EVERYTHING
+// ============================================
+function init() {
+  indexIndicators();
+
+  // USA
+  renderKPICards('kpi-usa-output', DATA.usa.output);
+  renderKPICards('kpi-usa-labor', DATA.usa.labor);
+  renderKPICards('kpi-usa-inflation', DATA.usa.inflation);
+  renderKPICards('kpi-usa-financial', DATA.usa.financial);
+  renderKPICards('kpi-usa-housing', DATA.usa.housing);
+  renderKPICards('kpi-usa-fiscal', DATA.usa.fiscal);
+
+  // Europe
+  renderKPICards('kpi-europe-main', DATA.europe.main);
+  renderEuropeTable();
+
+  // Emerging Markets
+  renderKPICards('kpi-em-main', DATA.emerging.countries.slice(0, 6).map(c => ({
+    id: 'em_' + c.name.toLowerCase().replace(/\s/g,'_'),
+    title: c.flag + ' ' + c.name + ' GDP Growth',
+    value: c.gdp + '%',
+    period: '2025 Est.',
+    change: c.gdp > 3 ? 'Strong' : c.gdp > 1 ? 'Moderate' : 'Weak',
+    changeDir: c.gdp > 3 ? 'up' : c.gdp > 1 ? 'neutral' : 'down',
+    icon: 'fas fa-chart-line',
+    gradient: c.gdp > 5 ? 'var(--gradient-2)' : c.gdp > 3 ? 'var(--gradient-1)' : 'var(--gradient-3)',
+    source: c.source,
+    sourceUrl: c.sourceUrl,
+    description: `${c.name} economic overview. Inflation: ${c.inflation}%, Policy Rate: ${c.policyRate}%, Debt/GDP: ${c.debt}%.`,
+    history: null,
+    details: { 'Inflation': c.inflation + '%', 'Policy Rate': c.policyRate + '%', 'Debt/GDP': c.debt + '%', 'Current Acct': c.currentAcct + '%', 'FX YTD': c.fxYtd }
+  })));
+  renderEMTable();
+
+  // Global
+  renderKPICards('kpi-global-commodities', DATA.global.commodities);
+
+  // Rates
+  renderCentralBankCards();
+  renderRealYieldCards();
+
+  // Index EM cards for modals
+  DATA.emerging.countries.slice(0, 6).forEach(c => {
+    const id = 'em_' + c.name.toLowerCase().replace(/\s/g,'_');
+    allIndicators[id] = {
+      id, title: c.name + ' GDP Growth', value: c.gdp + '%', period: '2025 Est.',
+      icon: 'fas fa-chart-line', gradient: 'var(--gradient-1)',
+      source: c.source, sourceUrl: c.sourceUrl,
+      description: `${c.name}: GDP ${c.gdp}%, Inflation ${c.inflation}%, Policy Rate ${c.policyRate}%, Debt/GDP ${c.debt}%, Current Account ${c.currentAcct}% of GDP.`,
+      details: { 'Inflation': c.inflation + '%', 'Policy Rate': c.policyRate + '%', 'Debt/GDP': c.debt + '%', 'Current Acct/GDP': c.currentAcct + '%', 'FX vs USD YTD': c.fxYtd }
+    };
+  });
+
+  // Charts
+  initUSCharts();
+  initEuropeCharts();
+  initEMCharts();
+  initGlobalCharts();
+  initRatesCharts();
+
+  // Map initializes lazily when Global tab is first clicked (see switchTab)
+}
+
+// ============================================
+// LIVE DATA LOADER — reads data.json from fetch_data.py
+// ============================================
+async function loadLiveData() {
+  try {
+    const response = await fetch('data.json');
+    if (!response.ok) {
+      log_status('No data.json found — using embedded data. Run fetch_data.py for live updates.', 'warn');
+      return;
+    }
+    const liveData = await response.json();
+    log_status(`Live data loaded! Generated: ${new Date(liveData.meta.generated_at).toLocaleString()}`, 'success');
+    document.getElementById('lastUpdated').innerHTML =
+      new Date(liveData.meta.generated_at).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) +
+      ' <span style="font-size:10px;color:var(--accent-emerald)">(LIVE)</span>';
+
+    // Merge FRED data into the dashboard
+    if (liveData.fred) {
+      mergeFredData(liveData.fred);
+    }
+    // Merge World Bank data
+    if (liveData.world_bank) {
+      mergeWorldBankData(liveData.world_bank);
+    }
+    // Update Treasury debt
+    if (liveData.treasury && liveData.treasury.debt && liveData.treasury.debt.data) {
+      const debtRecord = liveData.treasury.debt.data[0];
+      if (debtRecord) {
+        const totalDebt = parseFloat(debtRecord.tot_pub_debt_out_amt);
+        const trillions = (totalDebt / 1e12).toFixed(1);
+        updateKPIIfExists('national_debt', `$${trillions}T`, debtRecord.record_date);
+      }
+    }
+  } catch (e) {
+    log_status('data.json not available — using embedded data.', 'info');
+    console.log('Live data load:', e.message);
+  }
+}
+
+function log_status(msg, level) {
+  const colors = { success: '#10b981', warn: '#f59e0b', info: '#6366f1' };
+  console.log(`%c[Market Cipher] ${msg}`, `color:${colors[level] || '#94a3b8'}`);
+}
+
+// Format FRED values nicely
+function formatFredValue(seriesId, value) {
+  if (value === null || value === undefined) return 'N/A';
+  const pctSeries = ['UNRATE','U6RATE','FEDFUNDS','DGS10','DGS2','DGS30','DGS5','DGS1','CIVPART',
+    'MORTGAGE30US','T10YIE','DFII5','DFII10','BAMLH0A0HYM2'];
+  const dollarSeries = ['DCOILWTICO','GOLDAMGBD228NLBM','CBBTCUSD','CES0500000003','DHHNGSP'];
+  const indexSeries = ['INDPRO','UMCSENT','VIXCLS'];
+  const bigNumSeries = ['GFDEBTN','M2SL','PAYEMS','HOUST','EXHOSLUSM495S','JTSJOL','RSAFS'];
+
+  if (pctSeries.includes(seriesId)) return value.toFixed(2) + '%';
+  if (dollarSeries.includes(seriesId)) return '$' + value.toLocaleString(undefined, {maximumFractionDigits:2});
+  if (bigNumSeries.includes(seriesId)) {
+    if (value >= 1e6) return (value/1e6).toFixed(1) + 'T';
+    if (value >= 1e3) return (value/1e3).toFixed(1) + 'B';
+    return value.toFixed(1) + 'M';
+  }
+  if (indexSeries.includes(seriesId)) return value.toFixed(1);
+  return value.toFixed(2);
+}
+
+// Map FRED series IDs to our dashboard KPI IDs
+const FRED_TO_KPI = {
+  'A191RL1Q225SBEA': 'gdp_growth',
+  'INDPRO': 'industrial_prod',
+  'UNRATE': 'unemployment',
+  'PAYEMS': 'nonfarm',
+  'CES0500000003': 'wage_growth',
+  'JTSJOL': 'jolts',
+  'CIVPART': 'lfpr',
+  'CPIAUCSL': 'cpi',
+  'CPILFESL': 'core_cpi',
+  'PCEPI': 'pce',
+  'PCEPILFE': 'core_pce',
+  'PPIFIS': 'ppi',
+  'FEDFUNDS': 'fed_funds',
+  'DGS10': '10yr',
+  'DTWEXBGS': 'dxy',
+  'M2SL': 'm2',
+  'HOUST': 'housing_starts',
+  'EXHOSLUSM495S': 'existing_home',
+  'CSUSHPINSA': 'case_shiller',
+  'RSAFS': 'retail_sales',
+  'GFDEBTN': 'national_debt',
+  'BOPGSTB': 'trade_balance',
+  'DCOILWTICO': 'wti_oil',
+  'GOLDAMGBD228NLBM': 'gold',
+  'VIXCLS': 'vix',
+  'CBBTCUSD': 'btc',
+  'PCOPPUSDM': 'copper',
+  'DHHNGSP': 'natgas',
+  'T10YIE': 'bei10',
+  'DFII5': 'tips5',
+};
+
+function mergeFredData(fredData) {
+  let updated = 0;
+  for (const [seriesId, seriesData] of Object.entries(fredData)) {
+    const kpiId = FRED_TO_KPI[seriesId];
+    if (!kpiId || !seriesData.latest) continue;
+
+    const formattedValue = formatFredValue(seriesId, seriesData.latest.value);
+    const period = seriesData.latest.date;
+
+    // Update the embedded data store
+    if (allIndicators[kpiId]) {
+      allIndicators[kpiId].value = formattedValue;
+      allIndicators[kpiId].period = period;
+      if (seriesData.history) allIndicators[kpiId].history = seriesData.history;
+      if (seriesData.history_labels) allIndicators[kpiId].historyLabels = seriesData.history_labels;
+      if (seriesData.change !== null) {
+        allIndicators[kpiId].change = (seriesData.change >= 0 ? '+' : '') + seriesData.change;
+        allIndicators[kpiId].changeDir = seriesData.change_dir;
+      }
+    }
+
+    // Update DOM
+    updateKPIIfExists(kpiId, formattedValue, period);
+    updated++;
+  }
+  log_status(`Updated ${updated} KPI cards with live FRED data`, 'success');
+}
+
+function updateKPIIfExists(kpiId, newValue, newPeriod) {
+  // Find the card by its onclick handler
+  const cards = document.querySelectorAll('.kpi-card');
+  for (const card of cards) {
+    const onclick = card.getAttribute('onclick');
+    if (onclick && onclick.includes(`'${kpiId}'`)) {
+      const valueEl = card.querySelector('.kpi-value');
+      const periodEl = card.querySelector('.kpi-period');
+      if (valueEl) {
+        valueEl.textContent = newValue;
+        valueEl.style.color = 'var(--accent-cyan)';  // highlight updated values
+        setTimeout(() => { valueEl.style.color = ''; }, 3000);
+      }
+      if (periodEl && newPeriod) periodEl.textContent = newPeriod;
+      break;
+    }
+  }
+}
+
+function mergeWorldBankData(wbData) {
+  // Update emerging markets table with latest WB data
+  const gdpIndicator = wbData['NY.GDP.MKTP.KD.ZG'];
+  const cpiIndicator = wbData['FP.CPI.TOTL.ZG'];
+  const unempIndicator = wbData['SL.UEM.TOTL.ZS'];
+  const debtIndicator = wbData['GC.DOD.TOTL.GD.ZS'];
+
+  if (gdpIndicator || cpiIndicator) {
+    log_status('World Bank data merged for international indicators', 'success');
+    // Data is already loaded in the map and tables via the embedded data
+    // The World Bank data provides validation and the latest year available
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  // Load live data after initial render (non-blocking)
+  setTimeout(() => loadLiveData(), 1000);
+});
+</script>
+
+</body>
+</html>

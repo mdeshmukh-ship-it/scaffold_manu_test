@@ -1,0 +1,4589 @@
+{
+  "meta": {
+    "generated_at": "2026-04-07T12:40:38.816238",
+    "generated_by": "Macro Dashboard Data Fetcher",
+    "sources": [
+      {
+        "name": "FRED (Federal Reserve Economic Data)",
+        "url": "https://fred.stlouisfed.org/",
+        "key_required": true
+      },
+      {
+        "name": "U.S. Treasury Fiscal Data",
+        "url": "https://fiscaldata.treasury.gov/",
+        "key_required": false
+      },
+      {
+        "name": "World Bank Open Data",
+        "url": "https://data.worldbank.org/",
+        "key_required": false
+      }
+    ],
+    "series_count": 41
+  },
+  "fred": {
+    "A191RL1Q225SBEA": {
+      "id": "A191RL1Q225SBEA",
+      "name": "Real GDP Growth (SAAR)",
+      "category": "output",
+      "source": "BEA",
+      "source_url": "https://www.bea.gov/data/gdp/gross-domestic-product",
+      "fred_url": "https://fred.stlouisfed.org/series/A191RL1Q225SBEA",
+      "latest": {
+        "date": "2025-10-01",
+        "value": 0.7
+      },
+      "previous": {
+        "date": "2025-07-01",
+        "value": 4.4
+      },
+      "change": -3.7,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        3.3,
+        1.9,
+        -0.6,
+        3.8,
+        4.4,
+        0.7
+      ],
+      "history_labels": [
+        "2024-07",
+        "2024-10",
+        "2025-01",
+        "2025-04",
+        "2025-07",
+        "2025-10"
+      ],
+      "all_observations": [
+        {
+          "date": "2023-01-01",
+          "value": 2.9
+        },
+        {
+          "date": "2023-04-01",
+          "value": 2.5
+        },
+        {
+          "date": "2023-07-01",
+          "value": 4.7
+        },
+        {
+          "date": "2023-10-01",
+          "value": 3.4
+        },
+        {
+          "date": "2024-01-01",
+          "value": 0.8
+        },
+        {
+          "date": "2024-04-01",
+          "value": 3.6
+        },
+        {
+          "date": "2024-07-01",
+          "value": 3.3
+        },
+        {
+          "date": "2024-10-01",
+          "value": 1.9
+        },
+        {
+          "date": "2025-01-01",
+          "value": -0.6
+        },
+        {
+          "date": "2025-04-01",
+          "value": 3.8
+        },
+        {
+          "date": "2025-07-01",
+          "value": 4.4
+        },
+        {
+          "date": "2025-10-01",
+          "value": 0.7
+        }
+      ]
+    },
+    "INDPRO": {
+      "id": "INDPRO",
+      "name": "Industrial Production Index",
+      "category": "output",
+      "source": "Federal Reserve",
+      "source_url": "https://www.federalreserve.gov/releases/g17/current/",
+      "fred_url": "https://fred.stlouisfed.org/series/INDPRO",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 102.551
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 102.3963
+      },
+      "change": 0.15,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        101.668,
+        101.2075,
+        101.3605,
+        101.6781,
+        102.3963,
+        102.551
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 101.0404
+        },
+        {
+          "date": "2025-04-01",
+          "value": 101.1279
+        },
+        {
+          "date": "2025-05-01",
+          "value": 100.9655
+        },
+        {
+          "date": "2025-06-01",
+          "value": 101.4785
+        },
+        {
+          "date": "2025-07-01",
+          "value": 101.894
+        },
+        {
+          "date": "2025-08-01",
+          "value": 101.6247
+        },
+        {
+          "date": "2025-09-01",
+          "value": 101.668
+        },
+        {
+          "date": "2025-10-01",
+          "value": 101.2075
+        },
+        {
+          "date": "2025-11-01",
+          "value": 101.3605
+        },
+        {
+          "date": "2025-12-01",
+          "value": 101.6781
+        },
+        {
+          "date": "2026-01-01",
+          "value": 102.3963
+        },
+        {
+          "date": "2026-02-01",
+          "value": 102.551
+        }
+      ]
+    },
+    "UNRATE": {
+      "id": "UNRATE",
+      "name": "Unemployment Rate",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/cps/",
+      "fred_url": "https://fred.stlouisfed.org/series/UNRATE",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 4.3
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": 4.4
+      },
+      "change": -0.1,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4.4,
+        4.5,
+        4.4,
+        4.3,
+        4.4,
+        4.3
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 4.2
+        },
+        {
+          "date": "2025-04-01",
+          "value": 4.2
+        },
+        {
+          "date": "2025-05-01",
+          "value": 4.3
+        },
+        {
+          "date": "2025-06-01",
+          "value": 4.1
+        },
+        {
+          "date": "2025-07-01",
+          "value": 4.3
+        },
+        {
+          "date": "2025-08-01",
+          "value": 4.3
+        },
+        {
+          "date": "2025-09-01",
+          "value": 4.4
+        },
+        {
+          "date": "2025-11-01",
+          "value": 4.5
+        },
+        {
+          "date": "2025-12-01",
+          "value": 4.4
+        },
+        {
+          "date": "2026-01-01",
+          "value": 4.3
+        },
+        {
+          "date": "2026-02-01",
+          "value": 4.4
+        },
+        {
+          "date": "2026-03-01",
+          "value": 4.3
+        }
+      ]
+    },
+    "PAYEMS": {
+      "id": "PAYEMS",
+      "name": "Nonfarm Payrolls (Total)",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/ces/",
+      "fred_url": "https://fred.stlouisfed.org/series/PAYEMS",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 178.0
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": -133.0
+      },
+      "change": 311.0,
+      "change_dir": "up",
+      "transform": "diff",
+      "history": [
+        -140.0,
+        41.0,
+        -17.0,
+        160.0,
+        -133.0,
+        178.0
+      ],
+      "history_labels": [
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-04-01",
+          "value": 108.0
+        },
+        {
+          "date": "2025-05-01",
+          "value": 13.0
+        },
+        {
+          "date": "2025-06-01",
+          "value": -20.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": 64.0
+        },
+        {
+          "date": "2025-08-01",
+          "value": -70.0
+        },
+        {
+          "date": "2025-09-01",
+          "value": 76.0
+        },
+        {
+          "date": "2025-10-01",
+          "value": -140.0
+        },
+        {
+          "date": "2025-11-01",
+          "value": 41.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": -17.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": 160.0
+        },
+        {
+          "date": "2026-02-01",
+          "value": -133.0
+        },
+        {
+          "date": "2026-03-01",
+          "value": 178.0
+        }
+      ]
+    },
+    "CES0500000003": {
+      "id": "CES0500000003",
+      "name": "Avg Hourly Earnings",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/ces/data/employment-and-earnings.htm",
+      "fred_url": "https://fred.stlouisfed.org/series/CES0500000003",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 37.38
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": 37.29
+      },
+      "change": 0.09,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        36.85,
+        37.0,
+        37.02,
+        37.15,
+        37.29,
+        37.38
+      ],
+      "history_labels": [
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-04-01",
+          "value": 36.12
+        },
+        {
+          "date": "2025-05-01",
+          "value": 36.28
+        },
+        {
+          "date": "2025-06-01",
+          "value": 36.36
+        },
+        {
+          "date": "2025-07-01",
+          "value": 36.47
+        },
+        {
+          "date": "2025-08-01",
+          "value": 36.62
+        },
+        {
+          "date": "2025-09-01",
+          "value": 36.7
+        },
+        {
+          "date": "2025-10-01",
+          "value": 36.85
+        },
+        {
+          "date": "2025-11-01",
+          "value": 37.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": 37.02
+        },
+        {
+          "date": "2026-01-01",
+          "value": 37.15
+        },
+        {
+          "date": "2026-02-01",
+          "value": 37.29
+        },
+        {
+          "date": "2026-03-01",
+          "value": 37.38
+        }
+      ]
+    },
+    "JTSJOL": {
+      "id": "JTSJOL",
+      "name": "Job Openings (JOLTS)",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/jlt/",
+      "fred_url": "https://fred.stlouisfed.org/series/JTSJOL",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 6882.0
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 7240.0
+      },
+      "change": -358.0,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        7169.0,
+        7170.0,
+        6846.0,
+        6550.0,
+        7240.0,
+        6882.0
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 6952.0
+        },
+        {
+          "date": "2025-04-01",
+          "value": 7098.0
+        },
+        {
+          "date": "2025-05-01",
+          "value": 7310.0
+        },
+        {
+          "date": "2025-06-01",
+          "value": 7204.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": 7089.0
+        },
+        {
+          "date": "2025-08-01",
+          "value": 6919.0
+        },
+        {
+          "date": "2025-09-01",
+          "value": 7169.0
+        },
+        {
+          "date": "2025-10-01",
+          "value": 7170.0
+        },
+        {
+          "date": "2025-11-01",
+          "value": 6846.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": 6550.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": 7240.0
+        },
+        {
+          "date": "2026-02-01",
+          "value": 6882.0
+        }
+      ]
+    },
+    "CIVPART": {
+      "id": "CIVPART",
+      "name": "Labor Force Participation Rate",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/cps/",
+      "fred_url": "https://fred.stlouisfed.org/series/CIVPART",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 61.9
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": 62.0
+      },
+      "change": -0.1,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        62.5,
+        62.5,
+        62.4,
+        62.1,
+        62.0,
+        61.9
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 62.5
+        },
+        {
+          "date": "2025-04-01",
+          "value": 62.6
+        },
+        {
+          "date": "2025-05-01",
+          "value": 62.4
+        },
+        {
+          "date": "2025-06-01",
+          "value": 62.3
+        },
+        {
+          "date": "2025-07-01",
+          "value": 62.2
+        },
+        {
+          "date": "2025-08-01",
+          "value": 62.3
+        },
+        {
+          "date": "2025-09-01",
+          "value": 62.5
+        },
+        {
+          "date": "2025-11-01",
+          "value": 62.5
+        },
+        {
+          "date": "2025-12-01",
+          "value": 62.4
+        },
+        {
+          "date": "2026-01-01",
+          "value": 62.1
+        },
+        {
+          "date": "2026-02-01",
+          "value": 62.0
+        },
+        {
+          "date": "2026-03-01",
+          "value": 61.9
+        }
+      ]
+    },
+    "U6RATE": {
+      "id": "U6RATE",
+      "name": "U-6 Unemployment Rate",
+      "category": "labor",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/cps/",
+      "fred_url": "https://fred.stlouisfed.org/series/U6RATE",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 8.0
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": 7.9
+      },
+      "change": 0.1,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        8.1,
+        8.7,
+        8.4,
+        8.1,
+        7.9,
+        8.0
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 7.9
+        },
+        {
+          "date": "2025-04-01",
+          "value": 7.8
+        },
+        {
+          "date": "2025-05-01",
+          "value": 7.8
+        },
+        {
+          "date": "2025-06-01",
+          "value": 7.7
+        },
+        {
+          "date": "2025-07-01",
+          "value": 7.9
+        },
+        {
+          "date": "2025-08-01",
+          "value": 8.1
+        },
+        {
+          "date": "2025-09-01",
+          "value": 8.1
+        },
+        {
+          "date": "2025-11-01",
+          "value": 8.7
+        },
+        {
+          "date": "2025-12-01",
+          "value": 8.4
+        },
+        {
+          "date": "2026-01-01",
+          "value": 8.1
+        },
+        {
+          "date": "2026-02-01",
+          "value": 7.9
+        },
+        {
+          "date": "2026-03-01",
+          "value": 8.0
+        }
+      ]
+    },
+    "CPIAUCSL": {
+      "id": "CPIAUCSL",
+      "name": "CPI All Items",
+      "category": "inflation",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/cpi/",
+      "fred_url": "https://fred.stlouisfed.org/series/CPIAUCSL",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 2.66
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 2.83
+      },
+      "change": -0.17,
+      "change_dir": "up",
+      "transform": "yoy_pct",
+      "history": [
+        2.94,
+        3.02,
+        2.99,
+        3.0,
+        2.83,
+        2.66
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 2.8
+        },
+        {
+          "date": "2025-03-01",
+          "value": 2.38
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.33
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.38
+        },
+        {
+          "date": "2025-06-01",
+          "value": 2.68
+        },
+        {
+          "date": "2025-07-01",
+          "value": 2.74
+        },
+        {
+          "date": "2025-08-01",
+          "value": 2.94
+        },
+        {
+          "date": "2025-09-01",
+          "value": 3.02
+        },
+        {
+          "date": "2025-11-01",
+          "value": 2.99
+        },
+        {
+          "date": "2025-12-01",
+          "value": 3.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": 2.83
+        },
+        {
+          "date": "2026-02-01",
+          "value": 2.66
+        }
+      ]
+    },
+    "CPILFESL": {
+      "id": "CPILFESL",
+      "name": "Core CPI (ex Food & Energy)",
+      "category": "inflation",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/cpi/",
+      "fred_url": "https://fred.stlouisfed.org/series/CPILFESL",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 2.73
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 2.95
+      },
+      "change": -0.22,
+      "change_dir": "up",
+      "transform": "yoy_pct",
+      "history": [
+        3.11,
+        3.02,
+        2.89,
+        2.84,
+        2.95,
+        2.73
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 3.14
+        },
+        {
+          "date": "2025-03-01",
+          "value": 2.81
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.78
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.77
+        },
+        {
+          "date": "2025-06-01",
+          "value": 2.91
+        },
+        {
+          "date": "2025-07-01",
+          "value": 3.05
+        },
+        {
+          "date": "2025-08-01",
+          "value": 3.11
+        },
+        {
+          "date": "2025-09-01",
+          "value": 3.02
+        },
+        {
+          "date": "2025-11-01",
+          "value": 2.89
+        },
+        {
+          "date": "2025-12-01",
+          "value": 2.84
+        },
+        {
+          "date": "2026-01-01",
+          "value": 2.95
+        },
+        {
+          "date": "2026-02-01",
+          "value": 2.73
+        }
+      ]
+    },
+    "PCEPI": {
+      "id": "PCEPI",
+      "name": "PCE Price Index",
+      "category": "inflation",
+      "source": "BEA",
+      "source_url": "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+      "fred_url": "https://fred.stlouisfed.org/series/PCEPI",
+      "latest": {
+        "date": "2026-01-01",
+        "value": 2.83
+      },
+      "previous": {
+        "date": "2025-12-01",
+        "value": 2.91
+      },
+      "change": -0.08,
+      "change_dir": "up",
+      "transform": "yoy_pct",
+      "history": [
+        2.75,
+        2.79,
+        2.71,
+        2.82,
+        2.91,
+        2.83
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 2.71
+        },
+        {
+          "date": "2025-03-01",
+          "value": 2.36
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.28
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.46
+        },
+        {
+          "date": "2025-06-01",
+          "value": 2.59
+        },
+        {
+          "date": "2025-07-01",
+          "value": 2.61
+        },
+        {
+          "date": "2025-08-01",
+          "value": 2.75
+        },
+        {
+          "date": "2025-09-01",
+          "value": 2.79
+        },
+        {
+          "date": "2025-10-01",
+          "value": 2.71
+        },
+        {
+          "date": "2025-11-01",
+          "value": 2.82
+        },
+        {
+          "date": "2025-12-01",
+          "value": 2.91
+        },
+        {
+          "date": "2026-01-01",
+          "value": 2.83
+        }
+      ]
+    },
+    "PCEPILFE": {
+      "id": "PCEPILFE",
+      "name": "Core PCE Price Index",
+      "category": "inflation",
+      "source": "BEA",
+      "source_url": "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+      "fred_url": "https://fred.stlouisfed.org/series/PCEPILFE",
+      "latest": {
+        "date": "2026-01-01",
+        "value": 3.06
+      },
+      "previous": {
+        "date": "2025-12-01",
+        "value": 3.01
+      },
+      "change": 0.05,
+      "change_dir": "down",
+      "transform": "yoy_pct",
+      "history": [
+        2.91,
+        2.83,
+        2.76,
+        2.83,
+        3.01,
+        3.06
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 2.97
+        },
+        {
+          "date": "2025-03-01",
+          "value": 2.67
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.61
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.78
+        },
+        {
+          "date": "2025-06-01",
+          "value": 2.81
+        },
+        {
+          "date": "2025-07-01",
+          "value": 2.86
+        },
+        {
+          "date": "2025-08-01",
+          "value": 2.91
+        },
+        {
+          "date": "2025-09-01",
+          "value": 2.83
+        },
+        {
+          "date": "2025-10-01",
+          "value": 2.76
+        },
+        {
+          "date": "2025-11-01",
+          "value": 2.83
+        },
+        {
+          "date": "2025-12-01",
+          "value": 3.01
+        },
+        {
+          "date": "2026-01-01",
+          "value": 3.06
+        }
+      ]
+    },
+    "PPIFIS": {
+      "id": "PPIFIS",
+      "name": "PPI Final Demand",
+      "category": "inflation",
+      "source": "BLS",
+      "source_url": "https://www.bls.gov/ppi/",
+      "fred_url": "https://fred.stlouisfed.org/series/PPIFIS",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 3.37
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 2.85
+      },
+      "change": 0.52,
+      "change_dir": "down",
+      "transform": "yoy_pct",
+      "history": [
+        3.05,
+        2.83,
+        2.99,
+        2.95,
+        2.85,
+        3.37
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 3.16
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.4
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.72
+        },
+        {
+          "date": "2025-06-01",
+          "value": 2.43
+        },
+        {
+          "date": "2025-07-01",
+          "value": 3.23
+        },
+        {
+          "date": "2025-08-01",
+          "value": 2.69
+        },
+        {
+          "date": "2025-09-01",
+          "value": 3.05
+        },
+        {
+          "date": "2025-10-01",
+          "value": 2.83
+        },
+        {
+          "date": "2025-11-01",
+          "value": 2.99
+        },
+        {
+          "date": "2025-12-01",
+          "value": 2.95
+        },
+        {
+          "date": "2026-01-01",
+          "value": 2.85
+        },
+        {
+          "date": "2026-02-01",
+          "value": 3.37
+        }
+      ]
+    },
+    "FEDFUNDS": {
+      "id": "FEDFUNDS",
+      "name": "Federal Funds Effective Rate",
+      "category": "financial",
+      "source": "Federal Reserve",
+      "source_url": "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",
+      "fred_url": "https://fred.stlouisfed.org/series/FEDFUNDS",
+      "latest": {
+        "date": "2026-03-01",
+        "value": 3.64
+      },
+      "previous": {
+        "date": "2026-02-01",
+        "value": 3.64
+      },
+      "change": 0.0,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4.09,
+        3.88,
+        3.72,
+        3.64,
+        3.64,
+        3.64
+      ],
+      "history_labels": [
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-04-01",
+          "value": 4.33
+        },
+        {
+          "date": "2025-05-01",
+          "value": 4.33
+        },
+        {
+          "date": "2025-06-01",
+          "value": 4.33
+        },
+        {
+          "date": "2025-07-01",
+          "value": 4.33
+        },
+        {
+          "date": "2025-08-01",
+          "value": 4.33
+        },
+        {
+          "date": "2025-09-01",
+          "value": 4.22
+        },
+        {
+          "date": "2025-10-01",
+          "value": 4.09
+        },
+        {
+          "date": "2025-11-01",
+          "value": 3.88
+        },
+        {
+          "date": "2025-12-01",
+          "value": 3.72
+        },
+        {
+          "date": "2026-01-01",
+          "value": 3.64
+        },
+        {
+          "date": "2026-02-01",
+          "value": 3.64
+        },
+        {
+          "date": "2026-03-01",
+          "value": 3.64
+        }
+      ]
+    },
+    "DGS10": {
+      "id": "DGS10",
+      "name": "10-Year Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS10",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 4.35
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 4.31
+      },
+      "change": 0.04,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4.44,
+        4.35,
+        4.3,
+        4.33,
+        4.31,
+        4.35
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 4.25
+        },
+        {
+          "date": "2026-03-20",
+          "value": 4.39
+        },
+        {
+          "date": "2026-03-23",
+          "value": 4.34
+        },
+        {
+          "date": "2026-03-24",
+          "value": 4.39
+        },
+        {
+          "date": "2026-03-25",
+          "value": 4.33
+        },
+        {
+          "date": "2026-03-26",
+          "value": 4.42
+        },
+        {
+          "date": "2026-03-27",
+          "value": 4.44
+        },
+        {
+          "date": "2026-03-30",
+          "value": 4.35
+        },
+        {
+          "date": "2026-03-31",
+          "value": 4.3
+        },
+        {
+          "date": "2026-04-01",
+          "value": 4.33
+        },
+        {
+          "date": "2026-04-02",
+          "value": 4.31
+        },
+        {
+          "date": "2026-04-03",
+          "value": 4.35
+        }
+      ]
+    },
+    "DGS2": {
+      "id": "DGS2",
+      "name": "2-Year Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS2",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 3.84
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 3.79
+      },
+      "change": 0.05,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        3.88,
+        3.82,
+        3.79,
+        3.81,
+        3.79,
+        3.84
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 3.79
+        },
+        {
+          "date": "2026-03-20",
+          "value": 3.88
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.83
+        },
+        {
+          "date": "2026-03-24",
+          "value": 3.9
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.84
+        },
+        {
+          "date": "2026-03-26",
+          "value": 3.96
+        },
+        {
+          "date": "2026-03-27",
+          "value": 3.88
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.82
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.79
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.81
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.79
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.84
+        }
+      ]
+    },
+    "DGS30": {
+      "id": "DGS30",
+      "name": "30-Year Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS30",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 4.91
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 4.88
+      },
+      "change": 0.03,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4.98,
+        4.91,
+        4.88,
+        4.91,
+        4.88,
+        4.91
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 4.83
+        },
+        {
+          "date": "2026-03-20",
+          "value": 4.96
+        },
+        {
+          "date": "2026-03-23",
+          "value": 4.91
+        },
+        {
+          "date": "2026-03-24",
+          "value": 4.94
+        },
+        {
+          "date": "2026-03-25",
+          "value": 4.89
+        },
+        {
+          "date": "2026-03-26",
+          "value": 4.93
+        },
+        {
+          "date": "2026-03-27",
+          "value": 4.98
+        },
+        {
+          "date": "2026-03-30",
+          "value": 4.91
+        },
+        {
+          "date": "2026-03-31",
+          "value": 4.88
+        },
+        {
+          "date": "2026-04-01",
+          "value": 4.91
+        },
+        {
+          "date": "2026-04-02",
+          "value": 4.88
+        },
+        {
+          "date": "2026-04-03",
+          "value": 4.91
+        }
+      ]
+    },
+    "DGS5": {
+      "id": "DGS5",
+      "name": "5-Year Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS5",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 3.99
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 3.94
+      },
+      "change": 0.05,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4.06,
+        3.97,
+        3.92,
+        3.97,
+        3.94,
+        3.99
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 3.88
+        },
+        {
+          "date": "2026-03-20",
+          "value": 4.01
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.95
+        },
+        {
+          "date": "2026-03-24",
+          "value": 4.03
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.96
+        },
+        {
+          "date": "2026-03-26",
+          "value": 4.08
+        },
+        {
+          "date": "2026-03-27",
+          "value": 4.06
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.97
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.92
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.97
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.94
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.99
+        }
+      ]
+    },
+    "DGS1": {
+      "id": "DGS1",
+      "name": "1-Year Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS1",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 3.72
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 3.68
+      },
+      "change": 0.04,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        3.77,
+        3.71,
+        3.68,
+        3.68,
+        3.68,
+        3.72
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-20",
+          "value": 3.8
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.76
+        },
+        {
+          "date": "2026-03-24",
+          "value": 3.81
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.77
+        },
+        {
+          "date": "2026-03-26",
+          "value": 3.83
+        },
+        {
+          "date": "2026-03-27",
+          "value": 3.77
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.71
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.68
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.68
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.68
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.72
+        }
+      ]
+    },
+    "DGS1MO": {
+      "id": "DGS1MO",
+      "name": "1-Month Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS1MO",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 3.71
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 3.72
+      },
+      "change": -0.01,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        3.74,
+        3.74,
+        3.74,
+        3.74,
+        3.72,
+        3.71
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-20",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-24",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-26",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-27",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.74
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.74
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.72
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.71
+        }
+      ]
+    },
+    "DGS3MO": {
+      "id": "DGS3MO",
+      "name": "3-Month Treasury Yield",
+      "category": "financial",
+      "source": "Treasury",
+      "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/",
+      "fred_url": "https://fred.stlouisfed.org/series/DGS3MO",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 3.71
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 3.7
+      },
+      "change": 0.01,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        3.73,
+        3.71,
+        3.7,
+        3.7,
+        3.7,
+        3.71
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-20",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-24",
+          "value": 3.74
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-26",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-27",
+          "value": 3.73
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.71
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.7
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.7
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.7
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.71
+        }
+      ]
+    },
+    "DTWEXBGS": {
+      "id": "DTWEXBGS",
+      "name": "Trade-Weighted Dollar Index",
+      "category": "financial",
+      "source": "Federal Reserve",
+      "source_url": "https://fred.stlouisfed.org/series/DTWEXBGS",
+      "fred_url": "https://fred.stlouisfed.org/series/DTWEXBGS",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 120.6565
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 120.503
+      },
+      "change": 0.15,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        120.8851,
+        121.2851,
+        121.035,
+        120.1198,
+        120.503,
+        120.6565
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 120.1802
+        },
+        {
+          "date": "2026-03-20",
+          "value": 120.2757
+        },
+        {
+          "date": "2026-03-23",
+          "value": 119.9371
+        },
+        {
+          "date": "2026-03-24",
+          "value": 120.1295
+        },
+        {
+          "date": "2026-03-25",
+          "value": 120.1282
+        },
+        {
+          "date": "2026-03-26",
+          "value": 120.389
+        },
+        {
+          "date": "2026-03-27",
+          "value": 120.8851
+        },
+        {
+          "date": "2026-03-30",
+          "value": 121.2851
+        },
+        {
+          "date": "2026-03-31",
+          "value": 121.035
+        },
+        {
+          "date": "2026-04-01",
+          "value": 120.1198
+        },
+        {
+          "date": "2026-04-02",
+          "value": 120.503
+        },
+        {
+          "date": "2026-04-03",
+          "value": 120.6565
+        }
+      ]
+    },
+    "M2SL": {
+      "id": "M2SL",
+      "name": "M2 Money Supply",
+      "category": "financial",
+      "source": "Federal Reserve",
+      "source_url": "https://www.federalreserve.gov/releases/h6/current/",
+      "fred_url": "https://fred.stlouisfed.org/series/M2SL",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 4.88
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 4.28
+      },
+      "change": 0.6,
+      "change_dir": "up",
+      "transform": "yoy_pct",
+      "history": [
+        4.24,
+        4.31,
+        3.94,
+        4.2,
+        4.28,
+        4.88
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 3.43
+        },
+        {
+          "date": "2025-04-01",
+          "value": 3.9
+        },
+        {
+          "date": "2025-05-01",
+          "value": 3.87
+        },
+        {
+          "date": "2025-06-01",
+          "value": 4.13
+        },
+        {
+          "date": "2025-07-01",
+          "value": 4.39
+        },
+        {
+          "date": "2025-08-01",
+          "value": 4.25
+        },
+        {
+          "date": "2025-09-01",
+          "value": 4.24
+        },
+        {
+          "date": "2025-10-01",
+          "value": 4.31
+        },
+        {
+          "date": "2025-11-01",
+          "value": 3.94
+        },
+        {
+          "date": "2025-12-01",
+          "value": 4.2
+        },
+        {
+          "date": "2026-01-01",
+          "value": 4.28
+        },
+        {
+          "date": "2026-02-01",
+          "value": 4.88
+        }
+      ]
+    },
+    "BAMLH0A0HYM2": {
+      "id": "BAMLH0A0HYM2",
+      "name": "High Yield OAS Spread",
+      "category": "financial",
+      "source": "ICE BofA / FRED",
+      "source_url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2",
+      "fred_url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2",
+      "latest": {
+        "date": "2026-04-06",
+        "value": 3.05
+      },
+      "previous": {
+        "date": "2026-04-03",
+        "value": 3.13
+      },
+      "change": -0.08,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        3.46,
+        3.28,
+        3.16,
+        3.17,
+        3.13,
+        3.05
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-20",
+          "value": 3.24
+        },
+        {
+          "date": "2026-03-23",
+          "value": 3.19
+        },
+        {
+          "date": "2026-03-24",
+          "value": 3.19
+        },
+        {
+          "date": "2026-03-25",
+          "value": 3.17
+        },
+        {
+          "date": "2026-03-26",
+          "value": 3.21
+        },
+        {
+          "date": "2026-03-27",
+          "value": 3.42
+        },
+        {
+          "date": "2026-03-30",
+          "value": 3.46
+        },
+        {
+          "date": "2026-03-31",
+          "value": 3.28
+        },
+        {
+          "date": "2026-04-01",
+          "value": 3.16
+        },
+        {
+          "date": "2026-04-02",
+          "value": 3.17
+        },
+        {
+          "date": "2026-04-03",
+          "value": 3.13
+        },
+        {
+          "date": "2026-04-06",
+          "value": 3.05
+        }
+      ]
+    },
+    "T10YIE": {
+      "id": "T10YIE",
+      "name": "10Y Breakeven Inflation",
+      "category": "financial",
+      "source": "FRED",
+      "source_url": "https://fred.stlouisfed.org/series/T10YIE",
+      "fred_url": "https://fred.stlouisfed.org/series/T10YIE",
+      "latest": {
+        "date": "2026-04-06",
+        "value": 2.36
+      },
+      "previous": {
+        "date": "2026-04-03",
+        "value": 2.36
+      },
+      "change": 0.0,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        2.31,
+        2.3,
+        2.31,
+        2.34,
+        2.36,
+        2.36
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-20",
+          "value": 2.38
+        },
+        {
+          "date": "2026-03-23",
+          "value": 2.33
+        },
+        {
+          "date": "2026-03-24",
+          "value": 2.33
+        },
+        {
+          "date": "2026-03-25",
+          "value": 2.31
+        },
+        {
+          "date": "2026-03-26",
+          "value": 2.34
+        },
+        {
+          "date": "2026-03-27",
+          "value": 2.31
+        },
+        {
+          "date": "2026-03-30",
+          "value": 2.31
+        },
+        {
+          "date": "2026-03-31",
+          "value": 2.3
+        },
+        {
+          "date": "2026-04-01",
+          "value": 2.31
+        },
+        {
+          "date": "2026-04-02",
+          "value": 2.34
+        },
+        {
+          "date": "2026-04-03",
+          "value": 2.36
+        },
+        {
+          "date": "2026-04-06",
+          "value": 2.36
+        }
+      ]
+    },
+    "DFII5": {
+      "id": "DFII5",
+      "name": "5Y TIPS Real Yield",
+      "category": "financial",
+      "source": "FRED",
+      "source_url": "https://fred.stlouisfed.org/series/DFII5",
+      "fred_url": "https://fred.stlouisfed.org/series/DFII5",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 1.38
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 1.37
+      },
+      "change": 0.01,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        1.5,
+        1.4,
+        1.38,
+        1.42,
+        1.37,
+        1.38
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 1.27
+        },
+        {
+          "date": "2026-03-20",
+          "value": 1.38
+        },
+        {
+          "date": "2026-03-23",
+          "value": 1.42
+        },
+        {
+          "date": "2026-03-24",
+          "value": 1.48
+        },
+        {
+          "date": "2026-03-25",
+          "value": 1.45
+        },
+        {
+          "date": "2026-03-26",
+          "value": 1.52
+        },
+        {
+          "date": "2026-03-27",
+          "value": 1.5
+        },
+        {
+          "date": "2026-03-30",
+          "value": 1.4
+        },
+        {
+          "date": "2026-03-31",
+          "value": 1.38
+        },
+        {
+          "date": "2026-04-01",
+          "value": 1.42
+        },
+        {
+          "date": "2026-04-02",
+          "value": 1.37
+        },
+        {
+          "date": "2026-04-03",
+          "value": 1.38
+        }
+      ]
+    },
+    "DFII10": {
+      "id": "DFII10",
+      "name": "10Y TIPS Real Yield",
+      "category": "financial",
+      "source": "FRED",
+      "source_url": "https://fred.stlouisfed.org/series/DFII10",
+      "fred_url": "https://fred.stlouisfed.org/series/DFII10",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 1.99
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 1.97
+      },
+      "change": 0.02,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        2.13,
+        2.04,
+        2.0,
+        2.02,
+        1.97,
+        1.99
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 1.88
+        },
+        {
+          "date": "2026-03-20",
+          "value": 2.01
+        },
+        {
+          "date": "2026-03-23",
+          "value": 2.01
+        },
+        {
+          "date": "2026-03-24",
+          "value": 2.06
+        },
+        {
+          "date": "2026-03-25",
+          "value": 2.02
+        },
+        {
+          "date": "2026-03-26",
+          "value": 2.08
+        },
+        {
+          "date": "2026-03-27",
+          "value": 2.13
+        },
+        {
+          "date": "2026-03-30",
+          "value": 2.04
+        },
+        {
+          "date": "2026-03-31",
+          "value": 2.0
+        },
+        {
+          "date": "2026-04-01",
+          "value": 2.02
+        },
+        {
+          "date": "2026-04-02",
+          "value": 1.97
+        },
+        {
+          "date": "2026-04-03",
+          "value": 1.99
+        }
+      ]
+    },
+    "HOUST": {
+      "id": "HOUST",
+      "name": "Housing Starts (SAAR)",
+      "category": "housing",
+      "source": "Census Bureau",
+      "source_url": "https://www.census.gov/construction/nrc/index.html",
+      "fred_url": "https://fred.stlouisfed.org/series/HOUST",
+      "latest": {
+        "date": "2026-01-01",
+        "value": 1487.0
+      },
+      "previous": {
+        "date": "2025-12-01",
+        "value": 1387.0
+      },
+      "change": 100.0,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        1291.0,
+        1328.0,
+        1272.0,
+        1324.0,
+        1387.0,
+        1487.0
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 1490.0
+        },
+        {
+          "date": "2025-03-01",
+          "value": 1355.0
+        },
+        {
+          "date": "2025-04-01",
+          "value": 1398.0
+        },
+        {
+          "date": "2025-05-01",
+          "value": 1282.0
+        },
+        {
+          "date": "2025-06-01",
+          "value": 1382.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": 1420.0
+        },
+        {
+          "date": "2025-08-01",
+          "value": 1291.0
+        },
+        {
+          "date": "2025-09-01",
+          "value": 1328.0
+        },
+        {
+          "date": "2025-10-01",
+          "value": 1272.0
+        },
+        {
+          "date": "2025-11-01",
+          "value": 1324.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": 1387.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": 1487.0
+        }
+      ]
+    },
+    "EXHOSLUSM495S": {
+      "id": "EXHOSLUSM495S",
+      "name": "Existing Home Sales",
+      "category": "housing",
+      "source": "NAR",
+      "source_url": "https://www.nar.realtor/research-and-statistics/housing-statistics/existing-home-sales",
+      "fred_url": "https://fred.stlouisfed.org/series/EXHOSLUSM495S",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 4090000.0
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 4020000.0
+      },
+      "change": 70000.0,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        4080000.0,
+        4110000.0,
+        4090000.0,
+        4270000.0,
+        4020000.0,
+        4090000.0
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 4020000.0
+        },
+        {
+          "date": "2025-04-01",
+          "value": 4020000.0
+        },
+        {
+          "date": "2025-05-01",
+          "value": 4040000.0
+        },
+        {
+          "date": "2025-06-01",
+          "value": 3980000.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": 4030000.0
+        },
+        {
+          "date": "2025-08-01",
+          "value": 4030000.0
+        },
+        {
+          "date": "2025-09-01",
+          "value": 4080000.0
+        },
+        {
+          "date": "2025-10-01",
+          "value": 4110000.0
+        },
+        {
+          "date": "2025-11-01",
+          "value": 4090000.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": 4270000.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": 4020000.0
+        },
+        {
+          "date": "2026-02-01",
+          "value": 4090000.0
+        }
+      ]
+    },
+    "CSUSHPINSA": {
+      "id": "CSUSHPINSA",
+      "name": "Case-Shiller Home Price Index",
+      "category": "housing",
+      "source": "S&P CoreLogic",
+      "source_url": "https://fred.stlouisfed.org/series/CSUSHPINSA",
+      "fred_url": "https://fred.stlouisfed.org/series/CSUSHPINSA",
+      "latest": {
+        "date": "2026-01-01",
+        "value": 0.91
+      },
+      "previous": {
+        "date": "2025-12-01",
+        "value": 1.13
+      },
+      "change": -0.22,
+      "change_dir": "down",
+      "transform": "yoy_pct",
+      "history": [
+        1.48,
+        1.3,
+        1.31,
+        1.27,
+        1.13,
+        0.91
+      ],
+      "history_labels": [
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-02-01",
+          "value": 3.98
+        },
+        {
+          "date": "2025-03-01",
+          "value": 3.44
+        },
+        {
+          "date": "2025-04-01",
+          "value": 2.84
+        },
+        {
+          "date": "2025-05-01",
+          "value": 2.38
+        },
+        {
+          "date": "2025-06-01",
+          "value": 1.94
+        },
+        {
+          "date": "2025-07-01",
+          "value": 1.64
+        },
+        {
+          "date": "2025-08-01",
+          "value": 1.48
+        },
+        {
+          "date": "2025-09-01",
+          "value": 1.3
+        },
+        {
+          "date": "2025-10-01",
+          "value": 1.31
+        },
+        {
+          "date": "2025-11-01",
+          "value": 1.27
+        },
+        {
+          "date": "2025-12-01",
+          "value": 1.13
+        },
+        {
+          "date": "2026-01-01",
+          "value": 0.91
+        }
+      ]
+    },
+    "MORTGAGE30US": {
+      "id": "MORTGAGE30US",
+      "name": "30-Year Mortgage Rate",
+      "category": "housing",
+      "source": "Freddie Mac",
+      "source_url": "https://www.freddiemac.com/pmms",
+      "fred_url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+      "latest": {
+        "date": "2026-04-02",
+        "value": 6.46
+      },
+      "previous": {
+        "date": "2026-03-26",
+        "value": 6.38
+      },
+      "change": 0.08,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        5.98,
+        6.0,
+        6.11,
+        6.22,
+        6.38,
+        6.46
+      ],
+      "history_labels": [
+        "2026-02",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-01-15",
+          "value": 6.06
+        },
+        {
+          "date": "2026-01-22",
+          "value": 6.09
+        },
+        {
+          "date": "2026-01-29",
+          "value": 6.1
+        },
+        {
+          "date": "2026-02-05",
+          "value": 6.11
+        },
+        {
+          "date": "2026-02-12",
+          "value": 6.09
+        },
+        {
+          "date": "2026-02-19",
+          "value": 6.01
+        },
+        {
+          "date": "2026-02-26",
+          "value": 5.98
+        },
+        {
+          "date": "2026-03-05",
+          "value": 6.0
+        },
+        {
+          "date": "2026-03-12",
+          "value": 6.11
+        },
+        {
+          "date": "2026-03-19",
+          "value": 6.22
+        },
+        {
+          "date": "2026-03-26",
+          "value": 6.38
+        },
+        {
+          "date": "2026-04-02",
+          "value": 6.46
+        }
+      ]
+    },
+    "RSAFS": {
+      "id": "RSAFS",
+      "name": "Retail Sales",
+      "category": "housing",
+      "source": "Census Bureau",
+      "source_url": "https://www.census.gov/retail/index.html",
+      "fred_url": "https://fred.stlouisfed.org/series/RSAFS",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 0.6
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": -0.1
+      },
+      "change": 0.7,
+      "change_dir": "up",
+      "transform": "mom_pct",
+      "history": [
+        0.07,
+        -0.16,
+        0.5,
+        -0.0,
+        -0.1,
+        0.6
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 1.5
+        },
+        {
+          "date": "2025-04-01",
+          "value": -0.11
+        },
+        {
+          "date": "2025-05-01",
+          "value": -0.79
+        },
+        {
+          "date": "2025-06-01",
+          "value": 0.97
+        },
+        {
+          "date": "2025-07-01",
+          "value": 0.65
+        },
+        {
+          "date": "2025-08-01",
+          "value": 0.55
+        },
+        {
+          "date": "2025-09-01",
+          "value": 0.07
+        },
+        {
+          "date": "2025-10-01",
+          "value": -0.16
+        },
+        {
+          "date": "2025-11-01",
+          "value": 0.5
+        },
+        {
+          "date": "2025-12-01",
+          "value": -0.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": -0.1
+        },
+        {
+          "date": "2026-02-01",
+          "value": 0.6
+        }
+      ]
+    },
+    "UMCSENT": {
+      "id": "UMCSENT",
+      "name": "UMich Consumer Sentiment",
+      "category": "housing",
+      "source": "Univ of Michigan",
+      "source_url": "https://data.sca.isr.umich.edu/",
+      "fred_url": "https://fred.stlouisfed.org/series/UMCSENT",
+      "latest": {
+        "date": "2026-02-01",
+        "value": 56.6
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": 56.4
+      },
+      "change": 0.2,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        55.1,
+        53.6,
+        51.0,
+        52.9,
+        56.4,
+        56.6
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": 57.0
+        },
+        {
+          "date": "2025-04-01",
+          "value": 52.2
+        },
+        {
+          "date": "2025-05-01",
+          "value": 52.2
+        },
+        {
+          "date": "2025-06-01",
+          "value": 60.7
+        },
+        {
+          "date": "2025-07-01",
+          "value": 61.7
+        },
+        {
+          "date": "2025-08-01",
+          "value": 58.2
+        },
+        {
+          "date": "2025-09-01",
+          "value": 55.1
+        },
+        {
+          "date": "2025-10-01",
+          "value": 53.6
+        },
+        {
+          "date": "2025-11-01",
+          "value": 51.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": 52.9
+        },
+        {
+          "date": "2026-01-01",
+          "value": 56.4
+        },
+        {
+          "date": "2026-02-01",
+          "value": 56.6
+        }
+      ]
+    },
+    "GFDEBTN": {
+      "id": "GFDEBTN",
+      "name": "Federal Debt Total (Quarterly)",
+      "category": "fiscal",
+      "source": "Treasury",
+      "source_url": "https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/",
+      "fred_url": "https://fred.stlouisfed.org/series/GFDEBTN",
+      "latest": {
+        "date": "2025-10-01",
+        "value": 38514009.0
+      },
+      "previous": {
+        "date": "2025-07-01",
+        "value": 37637552.59555763
+      },
+      "change": 876456.4,
+      "change_dir": "neutral",
+      "transform": "level",
+      "history": [
+        35464674.0,
+        36218605.0,
+        36214309.520796455,
+        36211469.0,
+        37637552.59555763,
+        38514009.0
+      ],
+      "history_labels": [
+        "2024-07",
+        "2024-10",
+        "2025-01",
+        "2025-04",
+        "2025-07",
+        "2025-10"
+      ],
+      "all_observations": [
+        {
+          "date": "2023-01-01",
+          "value": 31458438.0
+        },
+        {
+          "date": "2023-04-01",
+          "value": 32332274.0
+        },
+        {
+          "date": "2023-07-01",
+          "value": 33167334.0
+        },
+        {
+          "date": "2023-10-01",
+          "value": 34001494.0
+        },
+        {
+          "date": "2024-01-01",
+          "value": 34586533.0
+        },
+        {
+          "date": "2024-04-01",
+          "value": 34831634.0
+        },
+        {
+          "date": "2024-07-01",
+          "value": 35464674.0
+        },
+        {
+          "date": "2024-10-01",
+          "value": 36218605.0
+        },
+        {
+          "date": "2025-01-01",
+          "value": 36214309.520796455
+        },
+        {
+          "date": "2025-04-01",
+          "value": 36211469.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": 37637552.59555763
+        },
+        {
+          "date": "2025-10-01",
+          "value": 38514009.0
+        }
+      ]
+    },
+    "BOPGSTB": {
+      "id": "BOPGSTB",
+      "name": "Trade Balance",
+      "category": "fiscal",
+      "source": "BEA/Census",
+      "source_url": "https://www.bea.gov/data/intl-trade-investment/international-trade-goods-and-services",
+      "fred_url": "https://fred.stlouisfed.org/series/BOPGSTB",
+      "latest": {
+        "date": "2026-02-01",
+        "value": -57347.0
+      },
+      "previous": {
+        "date": "2026-01-01",
+        "value": -54677.0
+      },
+      "change": -2670.0,
+      "change_dir": "neutral",
+      "transform": "level",
+      "history": [
+        -49168.0,
+        -31102.0,
+        -56026.0,
+        -72900.0,
+        -54677.0,
+        -57347.0
+      ],
+      "history_labels": [
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+      ],
+      "all_observations": [
+        {
+          "date": "2025-03-01",
+          "value": -135856.0
+        },
+        {
+          "date": "2025-04-01",
+          "value": -60084.0
+        },
+        {
+          "date": "2025-05-01",
+          "value": -70564.0
+        },
+        {
+          "date": "2025-06-01",
+          "value": -57637.0
+        },
+        {
+          "date": "2025-07-01",
+          "value": -74233.0
+        },
+        {
+          "date": "2025-08-01",
+          "value": -56011.0
+        },
+        {
+          "date": "2025-09-01",
+          "value": -49168.0
+        },
+        {
+          "date": "2025-10-01",
+          "value": -31102.0
+        },
+        {
+          "date": "2025-11-01",
+          "value": -56026.0
+        },
+        {
+          "date": "2025-12-01",
+          "value": -72900.0
+        },
+        {
+          "date": "2026-01-01",
+          "value": -54677.0
+        },
+        {
+          "date": "2026-02-01",
+          "value": -57347.0
+        }
+      ]
+    },
+    "DCOILWTICO": {
+      "id": "DCOILWTICO",
+      "name": "WTI Crude Oil Price",
+      "category": "commodities",
+      "source": "EIA",
+      "source_url": "https://www.eia.gov/petroleum/data.php",
+      "fred_url": "https://fred.stlouisfed.org/series/DCOILWTICO",
+      "latest": {
+        "date": "2026-03-30",
+        "value": 104.69
+      },
+      "previous": {
+        "date": "2026-03-27",
+        "value": 101.26
+      },
+      "change": 3.43,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        89.33,
+        93.18,
+        91.51,
+        96.18,
+        101.26,
+        104.69
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-13",
+          "value": 98.48
+        },
+        {
+          "date": "2026-03-16",
+          "value": 93.39
+        },
+        {
+          "date": "2026-03-17",
+          "value": 96.01
+        },
+        {
+          "date": "2026-03-18",
+          "value": 96.12
+        },
+        {
+          "date": "2026-03-19",
+          "value": 96.11
+        },
+        {
+          "date": "2026-03-20",
+          "value": 98.71
+        },
+        {
+          "date": "2026-03-23",
+          "value": 89.33
+        },
+        {
+          "date": "2026-03-24",
+          "value": 93.18
+        },
+        {
+          "date": "2026-03-25",
+          "value": 91.51
+        },
+        {
+          "date": "2026-03-26",
+          "value": 96.18
+        },
+        {
+          "date": "2026-03-27",
+          "value": 101.26
+        },
+        {
+          "date": "2026-03-30",
+          "value": 104.69
+        }
+      ]
+    },
+    "VIXCLS": {
+      "id": "VIXCLS",
+      "name": "VIX Volatility Index",
+      "category": "commodities",
+      "source": "CBOE",
+      "source_url": "https://fred.stlouisfed.org/series/VIXCLS",
+      "fred_url": "https://fred.stlouisfed.org/series/VIXCLS",
+      "latest": {
+        "date": "2026-04-06",
+        "value": 24.17
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 23.87
+      },
+      "change": 0.3,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        31.05,
+        30.61,
+        25.25,
+        24.54,
+        23.87,
+        24.17
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 24.06
+        },
+        {
+          "date": "2026-03-20",
+          "value": 26.78
+        },
+        {
+          "date": "2026-03-23",
+          "value": 26.15
+        },
+        {
+          "date": "2026-03-24",
+          "value": 26.95
+        },
+        {
+          "date": "2026-03-25",
+          "value": 25.33
+        },
+        {
+          "date": "2026-03-26",
+          "value": 27.44
+        },
+        {
+          "date": "2026-03-27",
+          "value": 31.05
+        },
+        {
+          "date": "2026-03-30",
+          "value": 30.61
+        },
+        {
+          "date": "2026-03-31",
+          "value": 25.25
+        },
+        {
+          "date": "2026-04-01",
+          "value": 24.54
+        },
+        {
+          "date": "2026-04-02",
+          "value": 23.87
+        },
+        {
+          "date": "2026-04-06",
+          "value": 24.17
+        }
+      ]
+    },
+    "DEXUSEU": {
+      "id": "DEXUSEU",
+      "name": "EUR/USD Exchange Rate",
+      "category": "commodities",
+      "source": "Federal Reserve",
+      "source_url": "https://fred.stlouisfed.org/series/DEXUSEU",
+      "fred_url": "https://fred.stlouisfed.org/series/DEXUSEU",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 1.1523
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 1.1546
+      },
+      "change": -0.0,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        1.152,
+        1.1454,
+        1.1518,
+        1.1614,
+        1.1546,
+        1.1523
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 1.1515
+        },
+        {
+          "date": "2026-03-20",
+          "value": 1.1543
+        },
+        {
+          "date": "2026-03-23",
+          "value": 1.1587
+        },
+        {
+          "date": "2026-03-24",
+          "value": 1.1578
+        },
+        {
+          "date": "2026-03-25",
+          "value": 1.157
+        },
+        {
+          "date": "2026-03-26",
+          "value": 1.1542
+        },
+        {
+          "date": "2026-03-27",
+          "value": 1.152
+        },
+        {
+          "date": "2026-03-30",
+          "value": 1.1454
+        },
+        {
+          "date": "2026-03-31",
+          "value": 1.1518
+        },
+        {
+          "date": "2026-04-01",
+          "value": 1.1614
+        },
+        {
+          "date": "2026-04-02",
+          "value": 1.1546
+        },
+        {
+          "date": "2026-04-03",
+          "value": 1.1523
+        }
+      ]
+    },
+    "DEXJPUS": {
+      "id": "DEXJPUS",
+      "name": "USD/JPY Exchange Rate",
+      "category": "commodities",
+      "source": "Federal Reserve",
+      "source_url": "https://fred.stlouisfed.org/series/DEXJPUS",
+      "fred_url": "https://fred.stlouisfed.org/series/DEXJPUS",
+      "latest": {
+        "date": "2026-04-03",
+        "value": 159.64
+      },
+      "previous": {
+        "date": "2026-04-02",
+        "value": 159.34
+      },
+      "change": 0.3,
+      "change_dir": "up",
+      "transform": "level",
+      "history": [
+        160.16,
+        159.49,
+        159.08,
+        158.63,
+        159.34,
+        159.64
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-19",
+          "value": 158.19
+        },
+        {
+          "date": "2026-03-20",
+          "value": 159.26
+        },
+        {
+          "date": "2026-03-23",
+          "value": 158.7
+        },
+        {
+          "date": "2026-03-24",
+          "value": 158.9
+        },
+        {
+          "date": "2026-03-25",
+          "value": 159.2
+        },
+        {
+          "date": "2026-03-26",
+          "value": 159.65
+        },
+        {
+          "date": "2026-03-27",
+          "value": 160.16
+        },
+        {
+          "date": "2026-03-30",
+          "value": 159.49
+        },
+        {
+          "date": "2026-03-31",
+          "value": 159.08
+        },
+        {
+          "date": "2026-04-01",
+          "value": 158.63
+        },
+        {
+          "date": "2026-04-02",
+          "value": 159.34
+        },
+        {
+          "date": "2026-04-03",
+          "value": 159.64
+        }
+      ]
+    },
+    "CBBTCUSD": {
+      "id": "CBBTCUSD",
+      "name": "Bitcoin Price USD",
+      "category": "commodities",
+      "source": "Coinbase/FRED",
+      "source_url": "https://fred.stlouisfed.org/series/CBBTCUSD",
+      "fred_url": "https://fred.stlouisfed.org/series/CBBTCUSD",
+      "latest": {
+        "date": "2026-04-06",
+        "value": 68909.06
+      },
+      "previous": {
+        "date": "2026-04-05",
+        "value": 69279.05
+      },
+      "change": -369.99,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        68100.65,
+        66959.99,
+        66911.51,
+        67284.16,
+        69279.05,
+        68909.06
+      ],
+      "history_labels": [
+        "2026-04",
+        "2026-04",
+        "2026-04",
+        "2026-04",
+        "2026-04",
+        "2026-04"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-26",
+          "value": 68762.2
+        },
+        {
+          "date": "2026-03-27",
+          "value": 66390.02
+        },
+        {
+          "date": "2026-03-28",
+          "value": 66392.04
+        },
+        {
+          "date": "2026-03-29",
+          "value": 65862.79
+        },
+        {
+          "date": "2026-03-30",
+          "value": 66683.77
+        },
+        {
+          "date": "2026-03-31",
+          "value": 68133.96
+        },
+        {
+          "date": "2026-04-01",
+          "value": 68100.65
+        },
+        {
+          "date": "2026-04-02",
+          "value": 66959.99
+        },
+        {
+          "date": "2026-04-03",
+          "value": 66911.51
+        },
+        {
+          "date": "2026-04-04",
+          "value": 67284.16
+        },
+        {
+          "date": "2026-04-05",
+          "value": 69279.05
+        },
+        {
+          "date": "2026-04-06",
+          "value": 68909.06
+        }
+      ]
+    },
+    "DHHNGSP": {
+      "id": "DHHNGSP",
+      "name": "Natural Gas (Henry Hub)",
+      "category": "commodities",
+      "source": "EIA",
+      "source_url": "https://fred.stlouisfed.org/series/DHHNGSP",
+      "fred_url": "https://fred.stlouisfed.org/series/DHHNGSP",
+      "latest": {
+        "date": "2026-03-30",
+        "value": 2.88
+      },
+      "previous": {
+        "date": "2026-03-27",
+        "value": 2.99
+      },
+      "change": -0.11,
+      "change_dir": "down",
+      "transform": "level",
+      "history": [
+        2.94,
+        2.9,
+        2.94,
+        2.99,
+        2.99,
+        2.88
+      ],
+      "history_labels": [
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03",
+        "2026-03"
+      ],
+      "all_observations": [
+        {
+          "date": "2026-03-13",
+          "value": 3.2
+        },
+        {
+          "date": "2026-03-16",
+          "value": 3.03
+        },
+        {
+          "date": "2026-03-17",
+          "value": 3.14
+        },
+        {
+          "date": "2026-03-18",
+          "value": 3.12
+        },
+        {
+          "date": "2026-03-19",
+          "value": 3.21
+        },
+        {
+          "date": "2026-03-20",
+          "value": 3.04
+        },
+        {
+          "date": "2026-03-23",
+          "value": 2.94
+        },
+        {
+          "date": "2026-03-24",
+          "value": 2.9
+        },
+        {
+          "date": "2026-03-25",
+          "value": 2.94
+        },
+        {
+          "date": "2026-03-26",
+          "value": 2.99
+        },
+        {
+          "date": "2026-03-27",
+          "value": 2.99
+        },
+        {
+          "date": "2026-03-30",
+          "value": 2.88
+        }
+      ]
+    }
+  },
+  "treasury": {
+    "yields": {
+      "source": "U.S. Treasury Fiscal Data API",
+      "source_url": "https://fiscaldata.treasury.gov/datasets/average-interest-rates-treasury-securities/",
+      "data": [
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Treasury Bills",
+          "avg_interest_rate_amt": "3.702"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Treasury Notes",
+          "avg_interest_rate_amt": "3.212"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Treasury Bonds",
+          "avg_interest_rate_amt": "3.392"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Treasury Inflation-Protected Securities (TIPS)",
+          "avg_interest_rate_amt": "0.999"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Treasury Floating Rate Notes (FRN)",
+          "avg_interest_rate_amt": "3.628"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Federal Financing Bank",
+          "avg_interest_rate_amt": "2.389"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Total Marketable",
+          "avg_interest_rate_amt": "3.365"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Domestic Series",
+          "avg_interest_rate_amt": "7.577"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Special Purpose Vehicle",
+          "avg_interest_rate_amt": "2.801"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Foreign Series",
+          "avg_interest_rate_amt": "0.000"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "State and Local Government Series",
+          "avg_interest_rate_amt": "3.317"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "United States Savings Securities",
+          "avg_interest_rate_amt": "3.216"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "United States Savings Inflation Securities",
+          "avg_interest_rate_amt": "4.281"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Government Account Series",
+          "avg_interest_rate_amt": "3.146"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Government Account Series Inflation Securities",
+          "avg_interest_rate_amt": "1.348"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Total Non-marketable",
+          "avg_interest_rate_amt": "3.154"
+        },
+        {
+          "record_date": "2026-03-31",
+          "security_desc": "Total Interest-bearing Debt",
+          "avg_interest_rate_amt": "3.327"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Treasury Bills",
+          "avg_interest_rate_amt": "3.720"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Treasury Notes",
+          "avg_interest_rate_amt": "3.190"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Treasury Bonds",
+          "avg_interest_rate_amt": "3.377"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Treasury Inflation-Protected Securities (TIPS)",
+          "avg_interest_rate_amt": "0.990"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Treasury Floating Rate Notes (FRN)",
+          "avg_interest_rate_amt": "3.748"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Federal Financing Bank",
+          "avg_interest_rate_amt": "2.389"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Total Marketable",
+          "avg_interest_rate_amt": "3.355"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Domestic Series",
+          "avg_interest_rate_amt": "7.577"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Special Purpose Vehicle",
+          "avg_interest_rate_amt": "2.781"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "Foreign Series",
+          "avg_interest_rate_amt": "0.000"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "State and Local Government Series",
+          "avg_interest_rate_amt": "3.253"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "United States Savings Securities",
+          "avg_interest_rate_amt": "3.252"
+        },
+        {
+          "record_date": "2026-02-28",
+          "security_desc": "United States Savings Inflation Securities",
+          "avg_interest_rate_amt": "4.248"
+        }
+      ],
+      "fetched_at": "2026-04-07T12:40:32.185150"
+    },
+    "debt": {
+      "source": "U.S. Treasury - Debt to the Penny",
+      "source_url": "https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/",
+      "data": [
+        {
+          "record_date": "2026-04-03",
+          "tot_pub_debt_out_amt": "38981755126540.77",
+          "intragov_hold_amt": "7572263257161.53",
+          "debt_held_public_amt": "31409491869379.24"
+        },
+        {
+          "record_date": "2026-04-02",
+          "tot_pub_debt_out_amt": "39000264506637.00",
+          "intragov_hold_amt": "7590901350316.56",
+          "debt_held_public_amt": "31409363156320.44"
+        },
+        {
+          "record_date": "2026-04-01",
+          "tot_pub_debt_out_amt": "39016191534959.54",
+          "intragov_hold_amt": "7584862943761.03",
+          "debt_held_public_amt": "31431328591198.51"
+        },
+        {
+          "record_date": "2026-03-31",
+          "tot_pub_debt_out_amt": "39065421393640.82",
+          "intragov_hold_amt": "7634239113504.56",
+          "debt_held_public_amt": "31431182280136.26"
+        },
+        {
+          "record_date": "2026-03-30",
+          "tot_pub_debt_out_amt": "39023028185485.25",
+          "intragov_hold_amt": "7637099058712.35",
+          "debt_held_public_amt": "31385929126772.90"
+        }
+      ],
+      "fetched_at": "2026-04-07T12:40:32.537419"
+    }
+  },
+  "world_bank": {
+    "NY.GDP.MKTP.KD.ZG": {
+      "name": "GDP Growth (%)",
+      "source": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG",
+      "data": {
+        "BRA": {
+          "country": "Brazil",
+          "value": 3.42,
+          "year": "2024"
+        },
+        "CHE": {
+          "country": "Switzerland",
+          "value": 1.3,
+          "year": "2024"
+        },
+        "CHN": {
+          "country": "China",
+          "value": 4.98,
+          "year": "2024"
+        },
+        "DEU": {
+          "country": "Germany",
+          "value": -0.5,
+          "year": "2024"
+        },
+        "ESP": {
+          "country": "Spain",
+          "value": 3.46,
+          "year": "2024"
+        },
+        "FRA": {
+          "country": "France",
+          "value": 1.19,
+          "year": "2024"
+        },
+        "GBR": {
+          "country": "United Kingdom",
+          "value": 1.13,
+          "year": "2024"
+        },
+        "IND": {
+          "country": "India",
+          "value": 6.49,
+          "year": "2024"
+        },
+        "ITA": {
+          "country": "Italy",
+          "value": 0.69,
+          "year": "2024"
+        },
+        "MEX": {
+          "country": "Mexico",
+          "value": 1.43,
+          "year": "2024"
+        },
+        "NLD": {
+          "country": "Netherlands",
+          "value": 1.08,
+          "year": "2024"
+        },
+        "NOR": {
+          "country": "Norway",
+          "value": 2.1,
+          "year": "2024"
+        },
+        "POL": {
+          "country": "Poland",
+          "value": 3.03,
+          "year": "2024"
+        },
+        "SWE": {
+          "country": "Sweden",
+          "value": 0.82,
+          "year": "2024"
+        },
+        "USA": {
+          "country": "United States",
+          "value": 2.79,
+          "year": "2024"
+        },
+        "ARG": {
+          "country": "Argentina",
+          "value": -1.34,
+          "year": "2024"
+        },
+        "AUS": {
+          "country": "Australia",
+          "value": 1.37,
+          "year": "2024"
+        },
+        "CAN": {
+          "country": "Canada",
+          "value": 1.55,
+          "year": "2024"
+        },
+        "COL": {
+          "country": "Colombia",
+          "value": 1.6,
+          "year": "2024"
+        },
+        "EGY": {
+          "country": "Egypt, Arab Rep.",
+          "value": 2.4,
+          "year": "2024"
+        },
+        "IDN": {
+          "country": "Indonesia",
+          "value": 5.03,
+          "year": "2024"
+        },
+        "JPN": {
+          "country": "Japan",
+          "value": 0.1,
+          "year": "2024"
+        },
+        "KOR": {
+          "country": "Korea, Rep.",
+          "value": 2.0,
+          "year": "2024"
+        },
+        "NGA": {
+          "country": "Nigeria",
+          "value": 4.06,
+          "year": "2024"
+        },
+        "PHL": {
+          "country": "Philippines",
+          "value": 5.69,
+          "year": "2024"
+        },
+        "SAU": {
+          "country": "Saudi Arabia",
+          "value": 2.0,
+          "year": "2024"
+        },
+        "THA": {
+          "country": "Thailand",
+          "value": 2.54,
+          "year": "2024"
+        },
+        "TUR": {
+          "country": "Turkiye",
+          "value": 3.33,
+          "year": "2024"
+        },
+        "VNM": {
+          "country": "Viet Nam",
+          "value": 7.09,
+          "year": "2024"
+        },
+        "ZAF": {
+          "country": "South Africa",
+          "value": 0.53,
+          "year": "2024"
+        },
+        "ARE": {
+          "country": "United Arab Emirates",
+          "value": 3.99,
+          "year": "2024"
+        },
+        "BGD": {
+          "country": "Bangladesh",
+          "value": 4.22,
+          "year": "2024"
+        },
+        "CHL": {
+          "country": "Chile",
+          "value": 2.64,
+          "year": "2024"
+        },
+        "ISR": {
+          "country": "Israel",
+          "value": 0.87,
+          "year": "2024"
+        },
+        "MYS": {
+          "country": "Malaysia",
+          "value": 5.11,
+          "year": "2024"
+        },
+        "PAK": {
+          "country": "Pakistan",
+          "value": 3.05,
+          "year": "2024"
+        },
+        "RUS": {
+          "country": "Russian Federation",
+          "value": 4.34,
+          "year": "2024"
+        },
+        "SGP": {
+          "country": "Singapore",
+          "value": 4.39,
+          "year": "2024"
+        }
+      },
+      "fetched_at": "2026-04-07T12:40:33.472267"
+    },
+    "FP.CPI.TOTL.ZG": {
+      "name": "Inflation, CPI (%)",
+      "source": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG",
+      "data": {
+        "BRA": {
+          "country": "Brazil",
+          "value": 4.37,
+          "year": "2024"
+        },
+        "CHE": {
+          "country": "Switzerland",
+          "value": 1.06,
+          "year": "2024"
+        },
+        "CHN": {
+          "country": "China",
+          "value": 0.22,
+          "year": "2024"
+        },
+        "DEU": {
+          "country": "Germany",
+          "value": 2.26,
+          "year": "2024"
+        },
+        "ESP": {
+          "country": "Spain",
+          "value": 2.77,
+          "year": "2024"
+        },
+        "FRA": {
+          "country": "France",
+          "value": 2.0,
+          "year": "2024"
+        },
+        "GBR": {
+          "country": "United Kingdom",
+          "value": 3.27,
+          "year": "2024"
+        },
+        "IND": {
+          "country": "India",
+          "value": 4.95,
+          "year": "2024"
+        },
+        "ITA": {
+          "country": "Italy",
+          "value": 0.98,
+          "year": "2024"
+        },
+        "MEX": {
+          "country": "Mexico",
+          "value": 4.72,
+          "year": "2024"
+        },
+        "NLD": {
+          "country": "Netherlands",
+          "value": 3.35,
+          "year": "2024"
+        },
+        "NOR": {
+          "country": "Norway",
+          "value": 3.15,
+          "year": "2024"
+        },
+        "POL": {
+          "country": "Poland",
+          "value": 3.78,
+          "year": "2024"
+        },
+        "SWE": {
+          "country": "Sweden",
+          "value": 2.84,
+          "year": "2024"
+        },
+        "USA": {
+          "country": "United States",
+          "value": 2.95,
+          "year": "2024"
+        },
+        "ARG": {
+          "country": "Argentina",
+          "value": 219.88,
+          "year": "2024"
+        },
+        "AUS": {
+          "country": "Australia",
+          "value": 3.16,
+          "year": "2024"
+        },
+        "CAN": {
+          "country": "Canada",
+          "value": 2.38,
+          "year": "2024"
+        },
+        "COL": {
+          "country": "Colombia",
+          "value": 6.61,
+          "year": "2024"
+        },
+        "EGY": {
+          "country": "Egypt, Arab Rep.",
+          "value": 28.27,
+          "year": "2024"
+        },
+        "IDN": {
+          "country": "Indonesia",
+          "value": 2.18,
+          "year": "2024"
+        },
+        "JPN": {
+          "country": "Japan",
+          "value": 2.74,
+          "year": "2024"
+        },
+        "KOR": {
+          "country": "Korea, Rep.",
+          "value": 2.32,
+          "year": "2024"
+        },
+        "NGA": {
+          "country": "Nigeria",
+          "value": 33.24,
+          "year": "2024"
+        },
+        "PHL": {
+          "country": "Philippines",
+          "value": 3.21,
+          "year": "2024"
+        },
+        "SAU": {
+          "country": "Saudi Arabia",
+          "value": 1.69,
+          "year": "2024"
+        },
+        "THA": {
+          "country": "Thailand",
+          "value": 1.37,
+          "year": "2024"
+        },
+        "TUR": {
+          "country": "Turkiye",
+          "value": 58.51,
+          "year": "2024"
+        },
+        "VNM": {
+          "country": "Viet Nam",
+          "value": 3.62,
+          "year": "2024"
+        },
+        "ZAF": {
+          "country": "South Africa",
+          "value": 4.36,
+          "year": "2024"
+        },
+        "ARE": {
+          "country": "United Arab Emirates",
+          "value": 1.66,
+          "year": "2024"
+        },
+        "BGD": {
+          "country": "Bangladesh",
+          "value": 10.47,
+          "year": "2024"
+        },
+        "CHL": {
+          "country": "Chile",
+          "value": 4.3,
+          "year": "2024"
+        },
+        "ISR": {
+          "country": "Israel",
+          "value": 3.07,
+          "year": "2024"
+        },
+        "MYS": {
+          "country": "Malaysia",
+          "value": 1.83,
+          "year": "2024"
+        },
+        "PAK": {
+          "country": "Pakistan",
+          "value": 12.63,
+          "year": "2024"
+        },
+        "RUS": {
+          "country": "Russian Federation",
+          "value": 8.43,
+          "year": "2024"
+        },
+        "SGP": {
+          "country": "Singapore",
+          "value": 2.39,
+          "year": "2024"
+        }
+      },
+      "fetched_at": "2026-04-07T12:40:34.307705"
+    },
+    "SL.UEM.TOTL.ZS": {
+      "name": "Unemployment (%)",
+      "source": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS",
+      "data": {
+        "BRA": {
+          "country": "Brazil",
+          "value": 5.97,
+          "year": "2025"
+        },
+        "CHE": {
+          "country": "Switzerland",
+          "value": 4.87,
+          "year": "2025"
+        },
+        "CHN": {
+          "country": "China",
+          "value": 4.62,
+          "year": "2025"
+        },
+        "DEU": {
+          "country": "Germany",
+          "value": 3.71,
+          "year": "2025"
+        },
+        "ESP": {
+          "country": "Spain",
+          "value": 10.38,
+          "year": "2025"
+        },
+        "FRA": {
+          "country": "France",
+          "value": 7.54,
+          "year": "2025"
+        },
+        "GBR": {
+          "country": "United Kingdom",
+          "value": 4.75,
+          "year": "2025"
+        },
+        "IND": {
+          "country": "India",
+          "value": 4.22,
+          "year": "2025"
+        },
+        "ITA": {
+          "country": "Italy",
+          "value": 6.39,
+          "year": "2025"
+        },
+        "MEX": {
+          "country": "Mexico",
+          "value": 2.67,
+          "year": "2025"
+        },
+        "NLD": {
+          "country": "Netherlands",
+          "value": 3.87,
+          "year": "2025"
+        },
+        "NOR": {
+          "country": "Norway",
+          "value": 4.64,
+          "year": "2025"
+        },
+        "POL": {
+          "country": "Poland",
+          "value": 2.98,
+          "year": "2025"
+        },
+        "SWE": {
+          "country": "Sweden",
+          "value": 8.69,
+          "year": "2025"
+        },
+        "USA": {
+          "country": "United States",
+          "value": 4.2,
+          "year": "2025"
+        },
+        "ARG": {
+          "country": "Argentina",
+          "value": 7.14,
+          "year": "2025"
+        },
+        "AUS": {
+          "country": "Australia",
+          "value": 4.09,
+          "year": "2025"
+        },
+        "CAN": {
+          "country": "Canada",
+          "value": 6.91,
+          "year": "2025"
+        },
+        "COL": {
+          "country": "Colombia",
+          "value": 8.29,
+          "year": "2025"
+        },
+        "EGY": {
+          "country": "Egypt, Arab Rep.",
+          "value": 6.78,
+          "year": "2025"
+        },
+        "IDN": {
+          "country": "Indonesia",
+          "value": 3.24,
+          "year": "2025"
+        },
+        "JPN": {
+          "country": "Japan",
+          "value": 2.45,
+          "year": "2025"
+        },
+        "KOR": {
+          "country": "Korea, Rep.",
+          "value": 2.68,
+          "year": "2025"
+        },
+        "NGA": {
+          "country": "Nigeria",
+          "value": 3.06,
+          "year": "2025"
+        },
+        "PHL": {
+          "country": "Philippines",
+          "value": 2.23,
+          "year": "2025"
+        },
+        "SAU": {
+          "country": "Saudi Arabia",
+          "value": 3.04,
+          "year": "2025"
+        },
+        "THA": {
+          "country": "Thailand",
+          "value": 0.78,
+          "year": "2025"
+        },
+        "TUR": {
+          "country": "Turkiye",
+          "value": 8.52,
+          "year": "2025"
+        },
+        "VNM": {
+          "country": "Viet Nam",
+          "value": 1.52,
+          "year": "2025"
+        },
+        "ZAF": {
+          "country": "South Africa",
+          "value": 32.39,
+          "year": "2025"
+        },
+        "ARE": {
+          "country": "United Arab Emirates",
+          "value": 2.17,
+          "year": "2025"
+        },
+        "BGD": {
+          "country": "Bangladesh",
+          "value": 3.78,
+          "year": "2025"
+        },
+        "CHL": {
+          "country": "Chile",
+          "value": 8.97,
+          "year": "2025"
+        },
+        "ISR": {
+          "country": "Israel",
+          "value": 3.49,
+          "year": "2025"
+        },
+        "MYS": {
+          "country": "Malaysia",
+          "value": 3.76,
+          "year": "2025"
+        },
+        "PAK": {
+          "country": "Pakistan",
+          "value": 5.42,
+          "year": "2025"
+        },
+        "RUS": {
+          "country": "Russian Federation",
+          "value": 2.13,
+          "year": "2025"
+        },
+        "SGP": {
+          "country": "Singapore",
+          "value": 2.82,
+          "year": "2025"
+        }
+      },
+      "fetched_at": "2026-04-07T12:40:35.223306"
+    },
+    "GC.DOD.TOTL.GD.ZS": {
+      "name": "Government Debt (% GDP)",
+      "source": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/GC.DOD.TOTL.GD.ZS",
+      "data": {
+        "BRA": {
+          "country": "Brazil",
+          "value": 81.86,
+          "year": "2024"
+        },
+        "CHE": {
+          "country": "Switzerland",
+          "value": 19.88,
+          "year": "2023"
+        },
+        "ESP": {
+          "country": "Spain",
+          "value": 107.3,
+          "year": "2023"
+        },
+        "GBR": {
+          "country": "United Kingdom",
+          "value": 131.07,
+          "year": "2024"
+        },
+        "MEX": {
+          "country": "Mexico",
+          "value": 45.03,
+          "year": "2023"
+        },
+        "USA": {
+          "country": "United States",
+          "value": 118.11,
+          "year": "2024"
+        },
+        "AUS": {
+          "country": "Australia",
+          "value": 57.88,
+          "year": "2022"
+        },
+        "CAN": {
+          "country": "Canada",
+          "value": 64.9,
+          "year": "2024"
+        },
+        "COL": {
+          "country": "Colombia",
+          "value": 71.48,
+          "year": "2024"
+        },
+        "KOR": {
+          "country": "Korea, Rep.",
+          "value": 48.55,
+          "year": "2023"
+        },
+        "THA": {
+          "country": "Thailand",
+          "value": 62.2,
+          "year": "2024"
+        },
+        "TUR": {
+          "country": "Turkiye",
+          "value": 26.62,
+          "year": "2024"
+        },
+        "ZAF": {
+          "country": "South Africa",
+          "value": 79.45,
+          "year": "2023"
+        },
+        "MYS": {
+          "country": "Malaysia",
+          "value": 64.28,
+          "year": "2023"
+        },
+        "RUS": {
+          "country": "Russian Federation",
+          "value": 18.5,
+          "year": "2023"
+        },
+        "SGP": {
+          "country": "Singapore",
+          "value": 175.61,
+          "year": "2024"
+        }
+      },
+      "fetched_at": "2026-04-07T12:40:37.115052"
+    },
+    "BN.CAB.XOKA.GD.ZS": {
+      "name": "Current Account (% GDP)",
+      "source": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/BN.CAB.XOKA.GD.ZS",
+      "data": {
+        "BRA": {
+          "country": "Brazil",
+          "value": -3.03,
+          "year": "2024"
+        },
+        "CHE": {
+          "country": "Switzerland",
+          "value": 7.69,
+          "year": "2024"
+        },
+        "CHN": {
+          "country": "China",
+          "value": 2.26,
+          "year": "2024"
+        },
+        "DEU": {
+          "country": "Germany",
+          "value": 5.77,
+          "year": "2024"
+        },
+        "ESP": {
+          "country": "Spain",
+          "value": 3.18,
+          "year": "2024"
+        },
+        "FRA": {
+          "country": "France",
+          "value": 0.09,
+          "year": "2024"
+        },
+        "GBR": {
+          "country": "United Kingdom",
+          "value": -2.19,
+          "year": "2024"
+        },
+        "IND": {
+          "country": "India",
+          "value": -0.82,
+          "year": "2024"
+        },
+        "ITA": {
+          "country": "Italy",
+          "value": 1.08,
+          "year": "2024"
+        },
+        "MEX": {
+          "country": "Mexico",
+          "value": -0.9,
+          "year": "2024"
+        },
+        "NLD": {
+          "country": "Netherlands",
+          "value": 9.13,
+          "year": "2024"
+        },
+        "NOR": {
+          "country": "Norway",
+          "value": 14.82,
+          "year": "2024"
+        },
+        "POL": {
+          "country": "Poland",
+          "value": 0.3,
+          "year": "2024"
+        },
+        "SWE": {
+          "country": "Sweden",
+          "value": 5.92,
+          "year": "2024"
+        },
+        "USA": {
+          "country": "United States",
+          "value": -4.12,
+          "year": "2024"
+        },
+        "ARG": {
+          "country": "Argentina",
+          "value": 0.89,
+          "year": "2024"
+        },
+        "AUS": {
+          "country": "Australia",
+          "value": -1.98,
+          "year": "2024"
+        },
+        "CAN": {
+          "country": "Canada",
+          "value": -0.46,
+          "year": "2024"
+        },
+        "COL": {
+          "country": "Colombia",
+          "value": -1.64,
+          "year": "2024"
+        },
+        "EGY": {
+          "country": "Egypt, Arab Rep.",
+          "value": -5.72,
+          "year": "2024"
+        },
+        "IDN": {
+          "country": "Indonesia",
+          "value": -0.62,
+          "year": "2024"
+        },
+        "JPN": {
+          "country": "Japan",
+          "value": 4.82,
+          "year": "2024"
+        },
+        "KOR": {
+          "country": "Korea, Rep.",
+          "value": 5.28,
+          "year": "2024"
+        },
+        "NGA": {
+          "country": "Nigeria",
+          "value": 6.82,
+          "year": "2024"
+        },
+        "PHL": {
+          "country": "Philippines",
+          "value": -3.96,
+          "year": "2024"
+        },
+        "SAU": {
+          "country": "Saudi Arabia",
+          "value": -1.31,
+          "year": "2024"
+        },
+        "THA": {
+          "country": "Thailand",
+          "value": 2.21,
+          "year": "2024"
+        },
+        "TUR": {
+          "country": "Turkiye",
+          "value": -0.75,
+          "year": "2024"
+        },
+        "VNM": {
+          "country": "Viet Nam",
+          "value": 5.89,
+          "year": "2024"
+        },
+        "ZAF": {
+          "country": "South Africa",
+          "value": -0.64,
+          "year": "2024"
+        },
+        "ARE": {
+          "country": "United Arab Emirates",
+          "value": 14.48,
+          "year": "2024"
+        },
+        "BGD": {
+          "country": "Bangladesh",
+          "value": 0.32,
+          "year": "2024"
+        },
+        "CHL": {
+          "country": "Chile",
+          "value": -1.47,
+          "year": "2024"
+        },
+        "ISR": {
+          "country": "Israel",
+          "value": 2.86,
+          "year": "2024"
+        },
+        "MYS": {
+          "country": "Malaysia",
+          "value": 1.69,
+          "year": "2024"
+        },
+        "PAK": {
+          "country": "Pakistan",
+          "value": 0.13,
+          "year": "2024"
+        },
+        "RUS": {
+          "country": "Russian Federation",
+          "value": 2.91,
+          "year": "2024"
+        },
+        "SGP": {
+          "country": "Singapore",
+          "value": 17.54,
+          "year": "2024"
+        }
+      },
+      "fetched_at": "2026-04-07T12:40:38.815233"
+    }
+  }
+}
