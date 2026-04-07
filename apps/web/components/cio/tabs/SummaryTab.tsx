@@ -18,6 +18,8 @@ type Props = {
   onRun: () => void
   accountSummary: AccountSummary | null
   accountSummaryFunds: AccountSummaryFund[]
+  accountSummaryYtd: AccountSummary | null
+  accountSummaryYtdFunds: AccountSummaryFund[]
   accountSummaryLoading: boolean
   assetClassData: AssetClassRow[]
   assetClassLoading: boolean
@@ -55,6 +57,8 @@ export default function SummaryTab({
   onRun,
   accountSummary,
   accountSummaryFunds,
+  accountSummaryYtd,
+  accountSummaryYtdFunds,
   accountSummaryLoading,
   assetClassData,
   assetClassLoading,
@@ -131,89 +135,6 @@ export default function SummaryTab({
           value={reportDate}
           color="teal"
         />
-      </div>
-
-      {/* Account Summary (QTD) */}
-      <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
-        <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
-          Account Summary
-        </h3>
-        {accountSummaryLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="size-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
-          </div>
-        ) : accountSummary ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-700 text-xs uppercase text-secondary-foreground">
-                  <th className="px-4 py-2 text-left">Metrics</th>
-                  <th className="px-4 py-2 text-right">Quarter-to-Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-neutral-750/50">
-                  <td className="px-4 py-2.5 text-secondary-foreground">Beginning Total Value</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
-                    {formatDollar(accountSummary.beginning_value)}
-                  </td>
-                </tr>
-                <tr className="border-b border-neutral-750/50">
-                  <td className="px-4 py-2.5 text-secondary-foreground">Net Contributions/Withdrawals</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
-                    {formatDollar(accountSummary.net_contributions_withdrawals)}
-                  </td>
-                </tr>
-                <tr className="border-b border-neutral-750/50">
-                  <td className="px-4 py-2.5 text-secondary-foreground">Investment Earnings</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
-                    {formatDollar(accountSummary.investment_earnings)}
-                  </td>
-                </tr>
-                <tr className="border-b border-neutral-700">
-                  <td className="px-4 py-2.5 font-semibold text-primary-foreground">Ending Total Value</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-400">
-                    {formatDollar(accountSummary.ending_value)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            {/* Per-fund breakdown */}
-            {accountSummaryFunds.length > 1 && (
-              <div className="mt-4 border-t border-neutral-700 pt-3">
-                <p className="mb-2 text-[11px] font-medium uppercase text-secondary-foreground">
-                  By Fund Type
-                </p>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-neutral-750 text-[10px] uppercase text-secondary-foreground">
-                      <th className="px-3 py-1 text-left">Fund</th>
-                      <th className="px-3 py-1 text-right">Beginning</th>
-                      <th className="px-3 py-1 text-right">Net Flows</th>
-                      <th className="px-3 py-1 text-right">Earnings</th>
-                      <th className="px-3 py-1 text-right">Ending</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {accountSummaryFunds.map((f) => (
-                      <tr key={f.fund} className="border-b border-neutral-750/30">
-                        <td className="px-3 py-1.5 font-medium text-primary-foreground">{f.fund}</td>
-                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.beginning_value)}</td>
-                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.net_contributions_withdrawals)}</td>
-                        <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.investment_earnings)}</td>
-                        <td className="px-3 py-1.5 text-right font-mono text-primary-foreground">{formatDollar(f.ending_value)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="py-4 text-center text-sm text-secondary-foreground">
-            No account summary data available.
-          </p>
-        )}
       </div>
 
       {/* Charts Row */}
@@ -411,6 +332,173 @@ export default function SummaryTab({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Account Summary (QTD) */}
+      <div className="rounded-lg border border-neutral-750 bg-neutral-800 p-5">
+        <h3 className="mb-4 text-sm font-semibold text-primary-foreground">
+          Account Summary
+        </h3>
+        {accountSummaryLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="size-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+          </div>
+        ) : accountSummary ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-700 text-xs uppercase text-secondary-foreground">
+                  <th className="px-4 py-2 text-left">Metrics</th>
+                  <th className="px-4 py-2 text-right">Quarter-to-Date</th>
+                  {accountSummaryYtd && (
+                    <th className="px-4 py-2 text-right">Year-to-Date</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const qtdResidual = accountSummary.ending_value
+                    - accountSummary.beginning_value
+                    - accountSummary.net_contributions_withdrawals
+                    - accountSummary.investment_earnings
+                  const ytdResidual = accountSummaryYtd
+                    ? accountSummaryYtd.ending_value
+                      - accountSummaryYtd.beginning_value
+                      - accountSummaryYtd.net_contributions_withdrawals
+                      - accountSummaryYtd.investment_earnings
+                    : 0
+                  const showResidual = Math.abs(qtdResidual) >= 1 || Math.abs(ytdResidual) >= 1
+
+                  return (
+                    <>
+                      <tr className="border-b border-neutral-750/50">
+                        <td className="px-4 py-2.5 text-secondary-foreground">Beginning Total Value</td>
+                        <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                          {formatDollar(accountSummary.beginning_value)}
+                        </td>
+                        {accountSummaryYtd && (
+                          <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                            {formatDollar(accountSummaryYtd.beginning_value)}
+                          </td>
+                        )}
+                      </tr>
+                      <tr className="border-b border-neutral-750/50">
+                        <td className="px-4 py-2.5 text-secondary-foreground">Net Contributions/Withdrawals</td>
+                        <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                          {formatDollar(accountSummary.net_contributions_withdrawals)}
+                        </td>
+                        {accountSummaryYtd && (
+                          <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                            {formatDollar(accountSummaryYtd.net_contributions_withdrawals)}
+                          </td>
+                        )}
+                      </tr>
+                      <tr className="border-b border-neutral-750/50">
+                        <td className="px-4 py-2.5 text-secondary-foreground">Investment Earnings</td>
+                        <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                          {formatDollar(accountSummary.investment_earnings)}
+                        </td>
+                        {accountSummaryYtd && (
+                          <td className="px-4 py-2.5 text-right font-mono text-primary-foreground">
+                            {formatDollar(accountSummaryYtd.investment_earnings)}
+                          </td>
+                        )}
+                      </tr>
+                      {showResidual && (
+                        <tr className="border-b border-neutral-750/50">
+                          <td className="px-4 py-2.5 text-secondary-foreground italic">
+                            Reconciliation Adjustment<sup className="text-amber-500">*</sup>
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono italic text-amber-400/80">
+                            {formatDollar(qtdResidual)}
+                          </td>
+                          {accountSummaryYtd && (
+                            <td className="px-4 py-2.5 text-right font-mono italic text-amber-400/80">
+                              {formatDollar(ytdResidual)}
+                            </td>
+                          )}
+                        </tr>
+                      )}
+                      <tr className="border-b border-neutral-700">
+                        <td className="px-4 py-2.5 font-semibold text-primary-foreground">Ending Total Value</td>
+                        <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-400">
+                          {formatDollar(accountSummary.ending_value)}
+                        </td>
+                        {accountSummaryYtd && (
+                          <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-400">
+                            {formatDollar(accountSummaryYtd.ending_value)}
+                          </td>
+                        )}
+                      </tr>
+                    </>
+                  )
+                })()}
+              </tbody>
+            </table>
+            {/* Footnote */}
+            <p className="mt-3 text-[10px] leading-relaxed text-secondary-foreground/70">
+              <span className="text-amber-500">*</span> Reconciliation Adjustment reflects timing and scope
+              differences across data sources: liquid account values are daily (Fidelity), while private-fund
+              balances (VC/DI/RA) are quarterly snapshots from SSC with as-of dates that may lag the report date.
+              Private-fund investment earnings are not separately reported and are set to zero; any market
+              appreciation is captured in this adjustment.
+            </p>
+
+            {/* Per-fund breakdown */}
+            {accountSummaryFunds.length > 1 && (
+              <div className="mt-4 border-t border-neutral-700 pt-3">
+                <p className="mb-2 text-[11px] font-medium uppercase text-secondary-foreground">
+                  By Fund Type
+                </p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-neutral-750 text-[10px] uppercase text-secondary-foreground">
+                      <th className="px-3 py-1 text-left">Fund</th>
+                      <th className="px-3 py-1 text-right">QTD Beginning</th>
+                      <th className="px-3 py-1 text-right">QTD Net Flows</th>
+                      <th className="px-3 py-1 text-right">QTD Earnings</th>
+                      <th className="px-3 py-1 text-right">QTD Ending</th>
+                      {accountSummaryYtdFunds.length > 1 && (
+                        <>
+                          <th className="px-3 py-1 text-right border-l border-neutral-700 text-blue-400/70">YTD Beginning</th>
+                          <th className="px-3 py-1 text-right text-blue-400/70">YTD Net Flows</th>
+                          <th className="px-3 py-1 text-right text-blue-400/70">YTD Earnings</th>
+                          <th className="px-3 py-1 text-right text-blue-400/70">YTD Ending</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accountSummaryFunds.map((f) => {
+                      const ytdF = accountSummaryYtdFunds.find((y) => y.fund === f.fund)
+                      return (
+                        <tr key={f.fund} className="border-b border-neutral-750/30">
+                          <td className="px-3 py-1.5 font-medium text-primary-foreground">{f.fund}</td>
+                          <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.beginning_value)}</td>
+                          <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.net_contributions_withdrawals)}</td>
+                          <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(f.investment_earnings)}</td>
+                          <td className="px-3 py-1.5 text-right font-mono text-primary-foreground">{formatDollar(f.ending_value)}</td>
+                          {accountSummaryYtdFunds.length > 1 && ytdF && (
+                            <>
+                              <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground border-l border-neutral-700">{formatDollar(ytdF.beginning_value)}</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(ytdF.net_contributions_withdrawals)}</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-secondary-foreground">{formatDollar(ytdF.investment_earnings)}</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-primary-foreground">{formatDollar(ytdF.ending_value)}</td>
+                            </>
+                          )}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="py-4 text-center text-sm text-secondary-foreground">
+            No account summary data available.
+          </p>
+        )}
       </div>
     </div>
   )
